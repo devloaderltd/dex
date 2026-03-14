@@ -1,0 +1,123 @@
+{
+  "network": "ETH MAINNET",
+  "deployedAt": "2025-12-22T09:24:48.076Z",
+  "contracts": {
+    "IdentityRegistry": {
+      "address": "0x3820a7670F6EAF452aE08FfA8286F88c84Cec307",
+      "constructorArguments": []
+    },
+    "BasicCompliance": {
+      "address": "0xbc1c9C5882892983260182c7b541393F1AA4fEE5",
+      "constructorArguments": []
+    },
+    "PuriCoin": {
+      "address": "0xE828bE27bfd040d9F2E895e654935DEa213208ED",
+      "constructorArguments": [
+        "0x3820a7670f6eaf452ae08ffa8286f88c84cec307",
+        "0xbc1c9c5882892983260182c7b541393f1aa4fee5",
+        18
+      ]
+    },
+    "NAVOracle": {
+      "address": "0xD018dEe3cDf10344944F4fE5d986c45FeEA09B6B",
+      "constructorArguments": [
+        "0x6eC351f75ff07CDd11ED61c6E2Fa2D2064C485b7"
+      ]
+    },
+    "ProofRegistry": {
+      "address": "0x62970aF638693F51e2266F8372484c2f3B830f5C",
+      "constructorArguments": []
+    },
+    "PurDexKYCManager": {
+      "address": "0x670A5a977812735b630885FB6230cC0755311c02",
+      "proxy": true,
+      "implementation": "0x961bA5038a8a80d2594b9db689a28916e7B386CD",
+      "initializerArguments": [
+        "0x3820a7670F6EAF452aE08FfA8286F88c84Cec307",
+        "0x6eC351f75ff07CDd11ED61c6E2Fa2D2064C485b7"
+      ]
+    },
+    "WETH9": {
+      "address": "0xEa9477C4f68Cc1423e2208Eeec4D49D3fCa9a172",
+      "constructorArguments": []
+    },
+    "PurDexPairImplementation": {
+      "address": "0xfB44e3C8E91f7D2021cdfcA1dE6fE9402e517411",
+      "constructorArguments": []
+    },
+    "PurDexPairBeacon": {
+      "address": "0xab03dD59dcd6FF9894490db08831fb188f5e27A1",
+      "constructorArguments": [
+        "0xfB44e3C8E91f7D2021cdfcA1dE6fE9402e517411"
+      ]
+    },
+    "PurDexFactory": {
+      "address": "0x314948204e263a60cA40cC1E830f2Ce8C8D14B48",
+      "proxy": true,
+      "implementation": "0x8E28C64dC0E1F16feBd6899D48e6DfdB5ea69E57",
+      "initializerArguments": [
+        "0x6eC351f75ff07CDd11ED61c6E2Fa2D2064C485b7",
+        "0x670A5a977812735b630885FB6230cC0755311c02",
+        "0xab03dD59dcd6FF9894490db08831fb188f5e27A1"
+      ]
+    },
+    "PurDexRouter": {
+      "address": "0x67436c17c79464f2c6e31cD0f41840E2dDEAf321",
+      "proxy": true,
+      "implementation": "0x2b864a1aabd78cDBFb70dd5A54b73Dcdc412c3b8",
+      "initializerArguments": [
+        "0x314948204e263a60cA40cC1E830f2Ce8C8D14B48",
+        "0xEa9477C4f68Cc1423e2208Eeec4D49D3fCa9a172",
+        "0xE828bE27bfd040d9F2E895e654935DEa213208ED",
+        "0x3820a7670F6EAF452aE08FfA8286F88c84Cec307"
+      ]
+    },
+    "PurDexPair_PUR_WETH": {
+      "address": "0x28e4A99f69F82dc3623d3f22Bd2c0858436a5385",
+      "constructorArguments": []
+    },
+    "PurDexStakingRewards": {
+      "address": "0x6436178c5f1C16b567cBa2744474e992dd064167",
+      "proxy": true,
+      "implementation": "0x5866743660e0D667Bad3b62d855f57b16691D9e3",
+      "initializerArguments": [
+        "0x28e4A99f69F82dc3623d3f22Bd2c0858436a5385",
+        "0xE828bE27bfd040d9F2E895e654935DEa213208ED",
+        "0x3820a7670F6EAF452aE08FfA8286F88c84Cec307",
+        604800
+      ]
+    },
+    "PurDexOracleRouter": {
+      "address": "0xc4DD88eCE9265C3199426E2A22809E0d71591f79",
+      "proxy": true,
+      "implementation": "0x3fFCC0CaA506c04e7832363190cD3A1516875c00",
+      "initializerArguments": [
+        "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+        "0xD018dEe3cDf10344944F4fE5d986c45FeEA09B6B"
+      ]
+    },
+    "PurDexLendingPool": {
+      "address": "0x86D9D24b1B869b2F33A00DB90b304B996b21eEF5",
+      "proxy": true,
+      "implementation": "0x376C404A23889331DB9B0318047E938e612Bc9AE",
+      "initializerArguments": [
+        "0xE828bE27bfd040d9F2E895e654935DEa213208ED",
+        "0xEa9477C4f68Cc1423e2208Eeec4D49D3fCa9a172",
+        "0x3820a7670F6EAF452aE08FfA8286F88c84Cec307",
+        "0xc4DD88eCE9265C3199426E2A22809E0d71591f79"
+      ],
+      "params": {
+        "variableRate": {
+          "base": "2%",
+          "slope": "20%"
+        },
+        "collateral": "ETH-only",
+        "ltv": "50%",
+        "liquidationThreshold": "60%",
+        "liquidationBonus": "5%",
+        "feeTo": "0x6eC351f75ff07CDd11ED61c6E2Fa2D2064C485b7"
+      }
+    }
+  },
+  "updatedAt": "2026-03-01T04:04:01.165Z"
+}
