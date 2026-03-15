@@ -74,6 +74,7 @@ contract NAVOracle is Ownable {
         if (address(chainlinkFeed) != address(0)) {
             (, int256 answer,, uint256 updated,) = chainlinkFeed.latestRoundData();
             require(answer > 0, "Invalid feed");
+            require(updated > 0, "Invalid timestamp");
             decimals_ = chainlinkFeed.decimals();
             return (uint256(answer), decimals_, updated, true);
         }
