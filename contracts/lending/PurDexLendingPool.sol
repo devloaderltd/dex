@@ -161,10 +161,13 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     // --- rates ---
+    // ⚡ Bolt Optimization: Early return skips expensive cross-contract call when borrows are 0.
+    // Caching totalBorrows saves SLOAD.
     function utilization() public view returns (uint256 utilWad) {
+        uint256 _totalBorrows = totalBorrows;
+        if (_totalBorrows == 0) return 0;
         uint256 cash = IERC20(address(pur)).balanceOf(address(this));
-        if (totalBorrows == 0) return 0;
-        return (totalBorrows * WAD) / (cash + totalBorrows);
+        return (_totalBorrows * WAD) / (cash + _totalBorrows);
     }
 
     function borrowRatePerSecond() public view returns (uint256 ratePerSecondWad) {
@@ -174,34 +177,42 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     // --- interest accrual ---
+    // ⚡ Bolt Optimization: Cache totalBorrows, totalReserves, and borrowIndex into memory to save SLOAD/SSTORE costs.
     function accrueInterest() public {
         uint256 ts = block.timestamp;
         uint256 dt = ts - lastAccrual;
         if (dt == 0) return;
 
         lastAccrual = ts;
-        if (totalBorrows == 0) return;
+        uint256 _totalBorrows = totalBorrows;
+        if (_totalBorrows == 0) return;
 
         uint256 rate = borrowRatePerSecond();
         uint256 interestFactor = rate * dt; // WAD
-        uint256 interestAccumulated = (totalBorrows * interestFactor) / WAD;
+        uint256 interestAccumulated = (_totalBorrows * interestFactor) / WAD;
         if (interestAccumulated == 0) return;
 
         uint256 reservesAdded = (interestAccumulated * reserveFactorBps) / BPS;
-        totalReserves += reservesAdded;
-        totalBorrows += interestAccumulated;
+        uint256 _totalReserves = totalReserves + reservesAdded;
+        totalReserves = _totalReserves;
+        _totalBorrows += interestAccumulated;
+        totalBorrows = _totalBorrows;
 
         // update borrow index
-        borrowIndex += (borrowIndex * interestFactor) / WAD;
+        uint256 _borrowIndex = borrowIndex;
+        _borrowIndex += (_borrowIndex * interestFactor) / WAD;
+        borrowIndex = _borrowIndex;
 
-        emit Accrued(interestAccumulated, borrowIndex, totalBorrows, totalReserves);
+        emit Accrued(interestAccumulated, _borrowIndex, _totalBorrows, _totalReserves);
     }
 
     // --- views ---
+    // ⚡ Bolt Optimization: Cache totalReserves into memory as it is read twice.
     function totalAssets() public view returns (uint256 assets) {
         uint256 cash = IERC20(address(pur)).balanceOf(address(this));
         assets = cash + totalBorrows;
-        if (assets >= totalReserves) assets -= totalReserves;
+        uint256 _totalReserves = totalReserves;
+        if (assets >= _totalReserves) assets -= _totalReserves;
         else assets = 0;
     }
 
