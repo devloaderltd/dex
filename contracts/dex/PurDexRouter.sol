@@ -210,6 +210,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
     // --- swaps ---
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
+        address pair = IPurDexFactory(factory).getPair(path[0], path[1]);
         for (uint256 i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
@@ -222,7 +223,8 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? IPurDexFactory(factory).getPair(output, path[i + 2])
                 : _to;
 
-            IPurDexPair(IPurDexFactory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
+            IPurDexPair(pair).swap(amount0Out, amount1Out, to, new bytes(0));
+            pair = to;
         }
     }
 
