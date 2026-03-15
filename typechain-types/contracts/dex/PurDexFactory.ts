@@ -33,14 +33,12 @@ export interface PurDexFactoryInterface extends Interface {
       | "feeToSetter"
       | "getPair"
       | "initialize"
-      | "kycManager"
       | "owner"
       | "pairBeacon"
       | "proxiableUUID"
       | "renounceOwnership"
       | "setFeeTo"
       | "setFeeToSetter"
-      | "setKycManager"
       | "setPairBeacon"
       | "transferOwnership"
       | "upgradeTo"
@@ -53,7 +51,6 @@ export interface PurDexFactoryInterface extends Interface {
       | "BeaconUpgraded"
       | "FeeToUpdated"
       | "Initialized"
-      | "KycManagerUpdated"
       | "OwnershipTransferred"
       | "PairBeaconUpdated"
       | "PairCreated"
@@ -83,11 +80,7 @@ export interface PurDexFactoryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "kycManager",
-    values?: undefined
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -108,10 +101,6 @@ export interface PurDexFactoryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setFeeToSetter",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setKycManager",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -144,7 +133,6 @@ export interface PurDexFactoryInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "getPair", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "kycManager", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pairBeacon", data: BytesLike): Result;
   decodeFunctionResult(
@@ -158,10 +146,6 @@ export interface PurDexFactoryInterface extends Interface {
   decodeFunctionResult(functionFragment: "setFeeTo", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setFeeToSetter",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setKycManager",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -221,18 +205,6 @@ export namespace InitializedEvent {
   export type OutputTuple = [version: bigint];
   export interface OutputObject {
     version: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace KycManagerUpdatedEvent {
-  export type InputTuple = [kycManager: AddressLike];
-  export type OutputTuple = [kycManager: string];
-  export interface OutputObject {
-    kycManager: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -366,16 +338,10 @@ export interface PurDexFactory extends BaseContract {
   >;
 
   initialize: TypedContractMethod<
-    [
-      _feeToSetter: AddressLike,
-      _kycManager: AddressLike,
-      _pairBeacon: AddressLike
-    ],
+    [_feeToSetter: AddressLike, _pairBeacon: AddressLike],
     [void],
     "nonpayable"
   >;
-
-  kycManager: TypedContractMethod<[], [string], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
@@ -389,12 +355,6 @@ export interface PurDexFactory extends BaseContract {
 
   setFeeToSetter: TypedContractMethod<
     [_feeToSetter: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  setKycManager: TypedContractMethod<
-    [_kycManager: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -456,17 +416,10 @@ export interface PurDexFactory extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [
-      _feeToSetter: AddressLike,
-      _kycManager: AddressLike,
-      _pairBeacon: AddressLike
-    ],
+    [_feeToSetter: AddressLike, _pairBeacon: AddressLike],
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "kycManager"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
@@ -485,9 +438,6 @@ export interface PurDexFactory extends BaseContract {
   getFunction(
     nameOrSignature: "setFeeToSetter"
   ): TypedContractMethod<[_feeToSetter: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setKycManager"
-  ): TypedContractMethod<[_kycManager: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setPairBeacon"
   ): TypedContractMethod<[_pairBeacon: AddressLike], [void], "nonpayable">;
@@ -536,13 +486,6 @@ export interface PurDexFactory extends BaseContract {
     InitializedEvent.InputTuple,
     InitializedEvent.OutputTuple,
     InitializedEvent.OutputObject
-  >;
-  getEvent(
-    key: "KycManagerUpdated"
-  ): TypedContractEvent<
-    KycManagerUpdatedEvent.InputTuple,
-    KycManagerUpdatedEvent.OutputTuple,
-    KycManagerUpdatedEvent.OutputObject
   >;
   getEvent(
     key: "OwnershipTransferred"
@@ -616,17 +559,6 @@ export interface PurDexFactory extends BaseContract {
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject
-    >;
-
-    "KycManagerUpdated(address)": TypedContractEvent<
-      KycManagerUpdatedEvent.InputTuple,
-      KycManagerUpdatedEvent.OutputTuple,
-      KycManagerUpdatedEvent.OutputObject
-    >;
-    KycManagerUpdated: TypedContractEvent<
-      KycManagerUpdatedEvent.InputTuple,
-      KycManagerUpdatedEvent.OutputTuple,
-      KycManagerUpdatedEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<

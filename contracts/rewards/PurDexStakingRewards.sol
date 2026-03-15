@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../IIdentityRegistry.sol";
 import "../interfaces/IPuriCoin.sol";
 import "../dex/libraries/TransferHelper.sol";
 
@@ -16,16 +15,13 @@ import "../dex/libraries/TransferHelper.sol";
 /// @notice Stake an LP token (or any ERC20) and earn PUR rewards.
 /// @dev
 ///  - Rewards can be pre-funded OR minted (if this contract is set as an agent on PuriCoin).
-///  - Because PUR transfers are KYC-gated, this contract requires `IdentityRegistry.isVerified(user)`.
 contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
     using TransferHelper for address;
 
-    error SR__KycRequired();
     error SR__ZeroAmount();
 
     IERC20 public stakingToken;
     IPuriCoin public rewardsToken;
-    IIdentityRegistry public identityRegistry;
 
     uint256 public duration;
     uint256 public periodFinish;
@@ -54,17 +50,15 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
     function initialize(
         address _stakingToken,
         address _rewardsToken,
-        address _identityRegistry,
         uint256 _duration
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
 
-        require(_stakingToken != address(0) && _rewardsToken != address(0) && _identityRegistry != address(0), "ZERO");
+        require(_stakingToken != address(0) && _rewardsToken != address(0), "ZERO");
         stakingToken = IERC20(_stakingToken);
         rewardsToken = IPuriCoin(_rewardsToken);
-        identityRegistry = IIdentityRegistry(_identityRegistry);
         duration = _duration;
     }
 
@@ -78,10 +72,6 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;
-    }
-
-    function _requireVerified(address who) internal view {
-        if (!identityRegistry.isVerified(who)) revert SR__KycRequired();
     }
 
     function totalSupply() external view returns (uint256) {
@@ -109,7 +99,6 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
     }
 
     function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
-        _requireVerified(msg.sender);
         if (amount == 0) revert SR__ZeroAmount();
 
         _totalSupply += amount;
@@ -119,7 +108,6 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
     }
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        _requireVerified(msg.sender);
         if (amount == 0) revert SR__ZeroAmount();
         _totalSupply -= amount;
         _balances[msg.sender] -= amount;
@@ -128,7 +116,6 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
     }
 
     function getReward() public nonReentrant updateReward(msg.sender) {
-        _requireVerified(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;

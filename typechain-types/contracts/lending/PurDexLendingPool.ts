@@ -40,7 +40,6 @@ export interface PurDexLendingPoolInterface extends Interface {
       | "collateralWeth"
       | "depositCollateralETH"
       | "exchangeRate"
-      | "identityRegistry"
       | "initialize"
       | "lastAccrual"
       | "liquidate"
@@ -147,12 +146,8 @@ export interface PurDexLendingPoolInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "identityRegistry",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "lastAccrual",
@@ -310,10 +305,6 @@ export interface PurDexLendingPoolInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "exchangeRate",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "identityRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -777,15 +768,8 @@ export interface PurDexLendingPool extends BaseContract {
 
   exchangeRate: TypedContractMethod<[], [bigint], "view">;
 
-  identityRegistry: TypedContractMethod<[], [string], "view">;
-
   initialize: TypedContractMethod<
-    [
-      _pur: AddressLike,
-      _weth: AddressLike,
-      _identityRegistry: AddressLike,
-      _oracle: AddressLike
-    ],
+    [_pur: AddressLike, _weth: AddressLike, _oracle: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -964,17 +948,9 @@ export interface PurDexLendingPool extends BaseContract {
     nameOrSignature: "exchangeRate"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "identityRegistry"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [
-      _pur: AddressLike,
-      _weth: AddressLike,
-      _identityRegistry: AddressLike,
-      _oracle: AddressLike
-    ],
+    [_pur: AddressLike, _weth: AddressLike, _oracle: AddressLike],
     [void],
     "nonpayable"
   >;

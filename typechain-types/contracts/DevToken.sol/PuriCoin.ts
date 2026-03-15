@@ -30,13 +30,11 @@ export interface PuriCoinInterface extends Interface {
       | "approve"
       | "balanceOf"
       | "burnFrom"
-      | "compliance"
       | "decimals"
       | "decreaseAllowance"
       | "forceTransfer"
       | "freezeAddress"
       | "frozen"
-      | "identityRegistry"
       | "increaseAllowance"
       | "isAgent"
       | "mint"
@@ -44,8 +42,6 @@ export interface PuriCoinInterface extends Interface {
       | "owner"
       | "renounceOwnership"
       | "setAgent"
-      | "setCompliance"
-      | "setIdentityRegistry"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -78,10 +74,6 @@ export interface PuriCoinInterface extends Interface {
     functionFragment: "burnFrom",
     values: [AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "compliance",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
@@ -96,10 +88,6 @@ export interface PuriCoinInterface extends Interface {
     values: [AddressLike, boolean]
   ): string;
   encodeFunctionData(functionFragment: "frozen", values: [AddressLike]): string;
-  encodeFunctionData(
-    functionFragment: "identityRegistry",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "increaseAllowance",
     values: [AddressLike, BigNumberish]
@@ -121,14 +109,6 @@ export interface PuriCoinInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setAgent",
     values: [AddressLike, boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setCompliance",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setIdentityRegistry",
-    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
@@ -152,7 +132,6 @@ export interface PuriCoinInterface extends Interface {
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burnFrom", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "compliance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -168,10 +147,6 @@ export interface PuriCoinInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "frozen", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "identityRegistry",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
@@ -184,14 +159,6 @@ export interface PuriCoinInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setAgent", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setCompliance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setIdentityRegistry",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -346,8 +313,6 @@ export interface PuriCoin extends BaseContract {
     "nonpayable"
   >;
 
-  compliance: TypedContractMethod<[], [string], "view">;
-
   decimals: TypedContractMethod<[], [bigint], "view">;
 
   decreaseAllowance: TypedContractMethod<
@@ -369,8 +334,6 @@ export interface PuriCoin extends BaseContract {
   >;
 
   frozen: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
-
-  identityRegistry: TypedContractMethod<[], [string], "view">;
 
   increaseAllowance: TypedContractMethod<
     [spender: AddressLike, addedValue: BigNumberish],
@@ -394,18 +357,6 @@ export interface PuriCoin extends BaseContract {
 
   setAgent: TypedContractMethod<
     [agent: AddressLike, allowed: boolean],
-    [void],
-    "nonpayable"
-  >;
-
-  setCompliance: TypedContractMethod<
-    [newCompliance: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  setIdentityRegistry: TypedContractMethod<
-    [newRegistry: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -461,9 +412,6 @@ export interface PuriCoin extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "compliance"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -490,9 +438,6 @@ export interface PuriCoin extends BaseContract {
   getFunction(
     nameOrSignature: "frozen"
   ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "identityRegistry"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "increaseAllowance"
   ): TypedContractMethod<
@@ -526,12 +471,6 @@ export interface PuriCoin extends BaseContract {
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "setCompliance"
-  ): TypedContractMethod<[newCompliance: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setIdentityRegistry"
-  ): TypedContractMethod<[newRegistry: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;

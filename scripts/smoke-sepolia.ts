@@ -53,11 +53,9 @@ async function main() {
   const dep = loadDeployments();
 
   const PUR = must(dep, "PuriCoin");
-  const IDREG = must(dep, "IdentityRegistry");
   const ROUTER = must(dep, "PurDexRouter");
   const FACTORY = must(dep, "PurDexFactory");
   const WETH = must(dep, "WETH9");
-  const KYC = must(dep, "PurDexKYCManager");
   const STAKING = must(dep, "PurDexStakingRewards");
   const ORACLE = must(dep, "PurDexOracleRouter");
   const LENDING = must(dep, "PurDexLendingPool");
@@ -65,40 +63,9 @@ async function main() {
   console.log("Network:", network.name);
   console.log("Deployer:", deployer.address);
 
-  const idReg = await ethers.getContractAt("IdentityRegistry", IDREG);
-  const kyc = await ethers.getContractAt("PurDexKYCManager", KYC);
   const router = await ethers.getContractAt("PurDexRouter", ROUTER);
   const factory = await ethers.getContractAt("PurDexFactory", FACTORY);
   const pur = await ethers.getContractAt("PuriCoin", PUR);
-
-  // ---- 1) Ensure deployer is verified (signature path) ----
-  const alreadyVerified = await idReg.isVerified(deployer.address);
-  if (!alreadyVerified) {
-    console.log("Deployer not verified. Verifying via KYCManager signature...");
-
-    const chainId = (await ethers.provider.getNetwork()).chainId;
-    const nonce: bigint = await kyc.nonces(deployer.address);
-    const country = 18;
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
-
-    const domain = { name: "PurDexKYCManager", version: "1", chainId, verifyingContract: KYC };
-    const types = {
-      KYCApproval: [
-        { name: "user", type: "address" },
-        { name: "country", type: "uint16" },
-        { name: "deadline", type: "uint256" },
-        { name: "nonce", type: "uint256" },
-      ],
-    };
-    const value = { user: deployer.address, country, deadline, nonce };
-
-    const sig = await deployer.signTypedData(domain as any, types as any, value as any);
-    await (await kyc.verifySelfWithSig(country, deadline, sig)).wait();
-
-    console.log("Verified deployer:", await idReg.isVerified(deployer.address));
-  } else {
-    console.log("Deployer already verified.");
-  }
 
   // ---- 2) Mint PUR (if allowed) ----
   const mintAmount = ethers.parseUnits("50000", 18);
@@ -112,7 +79,7 @@ async function main() {
   const purBal: bigint = await pur.balanceOf(deployer.address);
   console.log("Deployer PUR balance:", purBal.toString());
 
-  // ---- 3) Ensure pair exists + verify router & pair ----
+  // ---- 3) Ensure pair exists ----
   let pairAddr: string = await factory.getPair(PUR, WETH);
   if (pairAddr === ethers.ZeroAddress) {
     console.log("Pair does not exist yet. Creating pair...");
@@ -120,16 +87,6 @@ async function main() {
     pairAddr = await factory.getPair(PUR, WETH);
   }
   console.log("Pair address (PUR/WETH):", pairAddr);
-
-  // Router & pair must be verified for ERC3643 transfers
-  if (!(await idReg.isVerified(ROUTER))) {
-    console.log("Router not verified; registering...");
-    await ensureVerified(idReg, kyc, ROUTER);
-  }
-  if (!(await idReg.isVerified(pairAddr))) {
-    console.log("Pair not verified; registering...");
-    await ensureVerified(idReg, kyc, pairAddr);
-  }
 
   // ---- 4) Add liquidity safely (auto-scale ETH, staticCall preview for optimal mins) ----
   const ethBal0 = await ethers.provider.getBalance(deployer.address);

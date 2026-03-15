@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../IIdentityRegistry.sol";
 import "../interfaces/IPuriCoin.sol";
 import "../dex/interfaces/IWETH.sol";
 import "../dex/libraries/TransferHelper.sol";
@@ -35,7 +34,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     // --- external deps ---
     IPuriCoin public pur;
     IWETH public weth;
-    IIdentityRegistry public identityRegistry;
     PurDexOracleRouter public oracle;
 
     // --- risk params ---
@@ -81,7 +79,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     event Repaid(address indexed payer, address indexed borrower, uint256 amount, uint256 remainingDebt);
     event Liquidated(address indexed liquidator, address indexed borrower, uint256 repaidPur, uint256 seizedWeth);
 
-    error LP__KycRequired();
     error LP__ZeroAmount();
     error LP__InsufficientLiquidity();
     error LP__HealthFactorTooLow();
@@ -93,15 +90,14 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
         _disableInitializers();
     }
 
-    function initialize(address _pur, address _weth, address _identityRegistry, address _oracle) external initializer {
+    function initialize(address _pur, address _weth, address _oracle) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
 
-        require(_pur != address(0) && _weth != address(0) && _identityRegistry != address(0) && _oracle != address(0), "ZERO");
+        require(_pur != address(0) && _weth != address(0) && _oracle != address(0), "ZERO");
         pur = IPuriCoin(_pur);
         weth = IWETH(_weth);
-        identityRegistry = IIdentityRegistry(_identityRegistry);
         oracle = PurDexOracleRouter(_oracle);
 
         // defaults per your requested config
@@ -153,11 +149,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
         require(amount <= totalReserves, "TOO_MUCH");
         totalReserves -= amount;
         address(pur).safeTransfer(to, amount);
-    }
-
-    // --- KYC ---
-    function _requireVerified(address who) internal view {
-        if (!identityRegistry.isVerified(who)) revert LP__KycRequired();
     }
 
     // --- rates ---
@@ -239,7 +230,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
 
     // --- supply ---
     function supply(uint256 amount) external nonReentrant {
-        _requireVerified(msg.sender);
         if (amount == 0) revert LP__ZeroAmount();
 
         accrueInterest();
@@ -262,7 +252,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function withdraw(uint256 shares) external nonReentrant {
-        _requireVerified(msg.sender);
         if (shares == 0) revert LP__ZeroAmount();
         require(shares <= supplyShares[msg.sender], "NOT_ENOUGH_SHARES");
 
@@ -281,7 +270,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
 
     // --- collateral ---
     function depositCollateralETH() external payable nonReentrant {
-        _requireVerified(msg.sender);
         if (msg.value == 0) revert LP__ZeroAmount();
         weth.deposit{value: msg.value}();
         collateralWeth[msg.sender] += msg.value;
@@ -289,7 +277,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function withdrawCollateralETH(uint256 wethAmount) external nonReentrant {
-        _requireVerified(msg.sender);
         if (wethAmount == 0) revert LP__ZeroAmount();
         require(wethAmount <= collateralWeth[msg.sender], "NOT_ENOUGH_COLLATERAL");
 
@@ -307,7 +294,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
 
     // --- borrow/repay ---
     function borrow(uint256 amount) external nonReentrant {
-        _requireVerified(msg.sender);
         if (amount == 0) revert LP__ZeroAmount();
         accrueInterest();
 
@@ -336,8 +322,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function _repayFrom(address payer, address borrower, uint256 amount) internal {
-        _requireVerified(payer);
-        _requireVerified(borrower);
         if (amount == 0) revert LP__ZeroAmount();
         uint256 debt = borrowBalanceCurrent(borrower);
         uint256 repayAmount = amount > debt ? debt : amount;
@@ -353,8 +337,6 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
 
     // --- liquidation ---
     function liquidate(address borrower, uint256 repayAmount) external nonReentrant {
-        _requireVerified(msg.sender);
-        _requireVerified(borrower);
         if (repayAmount == 0) revert LP__ZeroAmount();
 
         accrueInterest();

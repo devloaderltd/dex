@@ -12,22 +12,17 @@ import "./PurDexPair.sol";
 /// @dev
 ///  - This factory is deployed behind a UUPS proxy.
 ///  - Pairs are deployed behind an OZ BeaconProxy, so you can upgrade all pairs later by upgrading the beacon.
-///  - Optionally integrates with a KYC manager to auto-register newly created pairs.
 contract PurDexFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     error PurDexFactory__IdenticalAddresses();
     error PurDexFactory__ZeroAddress();
     error PurDexFactory__PairExists();
 
     event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
-    event KycManagerUpdated(address indexed kycManager);
     event PairBeaconUpdated(address indexed pairBeacon);
     event FeeToUpdated(address indexed feeTo);
 
     address public feeTo;
     address public feeToSetter;
-
-    // Optional hook: called after creating a pair so the pair can be KYC-verified in your IdentityRegistry.
-    address public kycManager;
 
     // Beacon used for all pairs.
     address public pairBeacon;
@@ -42,13 +37,12 @@ contract PurDexFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /// @dev UUPS initializer
-    function initialize(address _feeToSetter, address _kycManager, address _pairBeacon) external initializer {
+    function initialize(address _feeToSetter, address _pairBeacon) external initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
 
         if (_feeToSetter == address(0)) revert PurDexFactory__ZeroAddress();
         feeToSetter = _feeToSetter;
-        kycManager = _kycManager;
         pairBeacon = _pairBeacon;
     }
 
@@ -69,11 +63,6 @@ contract PurDexFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         feeToSetter = _feeToSetter;
     }
 
-    function setKycManager(address _kycManager) external {
-        require(msg.sender == feeToSetter, "FORBIDDEN");
-        kycManager = _kycManager;
-        emit KycManagerUpdated(_kycManager);
-    }
 
     function setPairBeacon(address _pairBeacon) external {
         require(msg.sender == feeToSetter, "FORBIDDEN");
@@ -97,12 +86,5 @@ contract PurDexFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);
         emit PairCreated(token0, token1, pair, allPairs.length);
-
-        // Auto-register pair in IdentityRegistry via your KYC manager (optional)
-        if (kycManager != address(0)) {
-            // best-effort; if the manager reverts, pair still exists but must be registered manually.
-            (bool ok, ) = kycManager.call(abi.encodeWithSignature("registerDexContract(address)", pair));
-            ok; // ignore
-        }
     }
 }

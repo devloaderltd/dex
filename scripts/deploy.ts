@@ -36,29 +36,12 @@ async function main() {
   console.log(`Deploying from: ${deployer.address}`);
   console.log(`Network: ${network.name}`);
 
-  const IdentityRegistry = await ethers.getContractFactory("IdentityRegistry");
-  const identityRegistry = await IdentityRegistry.deploy();
-  await identityRegistry.waitForDeployment();
-  console.log("IdentityRegistry:", await identityRegistry.getAddress());
-
-  const BasicCompliance = await ethers.getContractFactory("BasicCompliance");
-  const compliance = await BasicCompliance.deploy();
-  await compliance.waitForDeployment();
-  console.log("BasicCompliance:", await compliance.getAddress());
-
   const PuriCoin = await ethers.getContractFactory("PuriCoin");
   const puricoin = await PuriCoin.deploy(
-    await identityRegistry.getAddress(),
-    await compliance.getAddress(), TOKEN_DECIMALS
+    TOKEN_DECIMALS
   );
   await puricoin.waitForDeployment();
   console.log("PuriCoin:", await puricoin.getAddress());
-
-  const tx1 = await identityRegistry.setKYCAgent(deployer.address, true);
-  await tx1.wait();
-
-  const tx2 = await identityRegistry.registerInvestor(deployer.address, INVESTOR_COUNTRY_CODE);
-  await tx2.wait();
 
   const tx3 = await puricoin.mint(
     deployer.address,
@@ -81,38 +64,19 @@ async function main() {
 const navTx = await navOracle.setManualNAV(1_000_000_000, 18);
   await navTx.wait();
 
-  const ProofRegistry = await ethers.getContractFactory("ProofRegistry");
-  const proofRegistry = await ProofRegistry.deploy();
-  await proofRegistry.waitForDeployment();
-  console.log("ProofRegistry:", await proofRegistry.getAddress());
-
   const deployment = {
     network: network.name,
     deployedAt: new Date().toISOString(),
     contracts: {
-      IdentityRegistry: {
-        address: await identityRegistry.getAddress(),
-        constructorArguments: [],
-      },
-      BasicCompliance: {
-        address: await compliance.getAddress(),
-        constructorArguments: [],
-      },
       PuriCoin: {
         address: await puricoin.getAddress(),
         constructorArguments: [
-          await identityRegistry.getAddress(),
-          await compliance.getAddress(),
           TOKEN_DECIMALS,
         ],
       },
       NAVOracle: {
         address: await navOracle.getAddress(),
         constructorArguments: [feedAddr],
-      },
-      ProofRegistry: {
-        address: await proofRegistry.getAddress(),
-        constructorArguments: [],
       },
     },
   };
