@@ -6,8 +6,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "../IIdentityRegistry.sol";
-
 import "./interfaces/IPurDexFactory.sol";
 import "./interfaces/IPurDexPair.sol";
 import "./interfaces/IWETH.sol";
@@ -15,13 +13,11 @@ import "./libraries/PurDexLibrary.sol";
 import "./libraries/TransferHelper.sol";
 
 /// @notice Router for the PurDex AMM.
-/// @dev Adds a KYC gate for paths involving PUR (ERC3643-like token with IdentityRegistry).
 contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
     using TransferHelper for address;
 
     error Router__Expired();
     error Router__InvalidPath();
-    error Router__KycRequired();
     error Router__InsufficientA();
     error Router__InsufficientB();
     error Router__InsufficientOutput();
@@ -29,7 +25,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
     address public factory;
     address public WETH;
     address public PUR;
-    IIdentityRegistry public identityRegistry;
 
     /// @dev Prevent the implementation contract from being initialized directly.
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -42,16 +37,15 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         _;
     }
 
-    function initialize(address _factory, address _weth, address _pur, address _identityRegistry) external initializer {
+    function initialize(address _factory, address _weth, address _pur) external initializer {
         __ReentrancyGuard_init();
         __Ownable_init();
         __UUPSUpgradeable_init();
 
-        require(_factory != address(0) && _weth != address(0) && _pur != address(0) && _identityRegistry != address(0), "ZERO");
+        require(_factory != address(0) && _weth != address(0) && _pur != address(0), "ZERO");
         factory = _factory;
         WETH = _weth;
         PUR = _pur;
-        identityRegistry = IIdentityRegistry(_identityRegistry);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -60,25 +54,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         require(msg.sender == WETH, "ONLY_WETH");
     }
     function version() external pure returns (string memory) { return "v2"; }
-    // --- KYC helpers ---
-    function _pathTouchesPUR(address[] memory path) internal view returns (bool) {
-        address pur = PUR;
-        for (uint256 i = 0; i < path.length; i++) {
-            if (path[i] == pur) return true;
-        }
-        return false;
-    }
-
-    function _requireVerified(address who) internal view {
-        if (!identityRegistry.isVerified(who)) revert Router__KycRequired();
-    }
-
-    function _requireKycIfNeeded(address[] memory path, address to) internal view {
-        if (_pathTouchesPUR(path)) {
-            _requireVerified(msg.sender);
-            _requireVerified(to);
-        }
-    }
 
     // --- liquidity ---
     function _addLiquidity(
@@ -120,11 +95,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         address to,
         uint256 deadline
     ) external nonReentrant ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
-        address[] memory path = new address[](2);
-        path[0] = tokenA;
-        path[1] = tokenB;
-        _requireKycIfNeeded(path, to);
-
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = IPurDexFactory(factory).getPair(tokenA, tokenB);
 
@@ -141,11 +111,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         address to,
         uint256 deadline
     ) external payable nonReentrant ensure(deadline) returns (uint256 amountToken, uint256 amountETH, uint256 liquidity) {
-        address[] memory path = new address[](2);
-        path[0] = token;
-        path[1] = WETH;
-        _requireKycIfNeeded(path, to);
-
         (amountToken, amountETH) = _addLiquidity(
             token,
             WETH,
@@ -177,11 +142,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         address to,
         uint256 deadline
     ) public nonReentrant ensure(deadline) returns (uint256 amountA, uint256 amountB) {
-        address[] memory path = new address[](2);
-        path[0] = tokenA;
-        path[1] = tokenB;
-        _requireKycIfNeeded(path, to);
-
         address pair = IPurDexFactory(factory).getPair(tokenA, tokenB);
         require(pair != address(0), "PAIR_NOT_FOUND");
 
@@ -235,7 +195,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
     ) external nonReentrant ensure(deadline) returns (uint256[] memory amounts) {
         if (path.length < 2) revert Router__InvalidPath();
         address[] memory mpath = path;
-        _requireKycIfNeeded(mpath, to);
 
         amounts = PurDexLibrary.getAmountsOut(factory, amountIn, mpath);
         if (amounts[amounts.length - 1] < amountOutMin) revert Router__InsufficientOutput();
@@ -254,7 +213,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         if (path.length < 2) revert Router__InvalidPath();
         require(path[0] == WETH, "PATH_MUST_START_WETH");
         address[] memory mpath = path;
-        _requireKycIfNeeded(mpath, to);
 
         amounts = PurDexLibrary.getAmountsOut(factory, msg.value, mpath);
         if (amounts[amounts.length - 1] < amountOutMin) revert Router__InsufficientOutput();
@@ -275,7 +233,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         if (path.length < 2) revert Router__InvalidPath();
         require(path[path.length - 1] == WETH, "PATH_MUST_END_WETH");
         address[] memory mpath = path;
-        _requireKycIfNeeded(mpath, to);
 
         amounts = PurDexLibrary.getAmountsOut(factory, amountIn, mpath);
         if (amounts[amounts.length - 1] < amountOutMin) revert Router__InsufficientOutput();
@@ -299,7 +256,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         address[] memory path = new address[](2);
         path[0] = WETH;
         path[1] = PUR;
-        _requireKycIfNeeded(path, to);
 
         amounts = PurDexLibrary.getAmountsOut(factory, msg.value, path);
         if (amounts[amounts.length - 1] < amountOutMin) revert Router__InsufficientOutput();
@@ -321,7 +277,6 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         address[] memory path = new address[](2);
         path[0] = PUR;
         path[1] = WETH;
-        _requireKycIfNeeded(path, to);
 
         amounts = PurDexLibrary.getAmountsOut(factory, amountIn, path);
         if (amounts[amounts.length - 1] < amountOutMin) revert Router__InsufficientOutput();

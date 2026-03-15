@@ -99,57 +99,10 @@ async function main() {
   const deployed: DeployedContractInfo[] = [];
 
   // ---------- Load Artifacts from Hardhat ----------
-  const IdentityRegistryArtifact = await hre.artifacts.readArtifact("IdentityRegistry");
-  const BasicComplianceArtifact = await hre.artifacts.readArtifact("BasicCompliance");
   const NAVOracleArtifact = await hre.artifacts.readArtifact("NAVOracle");
-  const ProofRegistryArtifact = await hre.artifacts.readArtifact("ProofRegistry");
   const PuritokenArtifact = await hre.artifacts.readArtifact("PuriCoin");
 
-  // ---------- 1) IdentityRegistry ----------
-  console.log("\nDeploying IdentityRegistry...");
-  const IdentityRegistryFactory = new ethers.ContractFactory(
-    IdentityRegistryArtifact.abi,
-    IdentityRegistryArtifact.bytecode,
-    wallet,
-  );
-
-  // ABI currently has no constructor params
-  const identityRegistry = await IdentityRegistryFactory.deploy();
-  const idTx = identityRegistry.deploymentTransaction();
-  console.log("  tx:", idTx?.hash);
-  await identityRegistry.waitForDeployment();
-  const identityAddress = await identityRegistry.getAddress();
-  console.log("  deployed at:", identityAddress);
-
-  deployed.push({
-    name: "IdentityRegistry",
-    address: identityAddress,
-    txHash: idTx?.hash || "",
-  });
-
-  // ---------- 2) BasicCompliance ----------
-  console.log("\nDeploying BasicCompliance...");
-  const BasicComplianceFactory = new ethers.ContractFactory(
-    BasicComplianceArtifact.abi,
-    BasicComplianceArtifact.bytecode,
-    wallet,
-  );
-
-  // ABI currently has no constructor params
-  const compliance = await BasicComplianceFactory.deploy();
-  const compTx = compliance.deploymentTransaction();
-  console.log("  tx:", compTx?.hash);
-  await compliance.waitForDeployment();
-  const complianceAddress = await compliance.getAddress();
-  console.log("  deployed at:", complianceAddress);
-
-  deployed.push({
-    name: "BasicCompliance",
-    address: complianceAddress,
-    txHash: compTx?.hash || "",
-  });
-
-  // ---------- 3) NAVOracle ----------
+  // ---------- 1) NAVOracle ----------
   console.log("\nDeploying NAVOracle...");
   const NAVOracleFactory = new ethers.ContractFactory(
     NAVOracleArtifact.abi,
@@ -176,29 +129,7 @@ async function main() {
     txHash: navTx?.hash || "",
   });
 
-  // ---------- 4) ProofRegistry ----------
-  console.log("\nDeploying ProofRegistry...");
-  const ProofRegistryFactory = new ethers.ContractFactory(
-    ProofRegistryArtifact.abi,
-    ProofRegistryArtifact.bytecode,
-    wallet,
-  );
-
-  // ProofRegistry: ABI currently has NO constructor params
-  const proofRegistry = await ProofRegistryFactory.deploy();
-  const proofTx = proofRegistry.deploymentTransaction();
-  console.log("  tx:", proofTx?.hash);
-  await proofRegistry.waitForDeployment();
-  const proofRegistryAddress = await proofRegistry.getAddress();
-  console.log("  deployed at:", proofRegistryAddress);
-
-  deployed.push({
-    name: "ProofRegistry",
-    address: proofRegistryAddress,
-    txHash: proofTx?.hash || "",
-  });
-
-  // ---------- 5) PuriCoin ----------
+  // ---------- 2) PuriCoin ----------
 // NOTE: Legacy name in this script. For the current product branding, your token contract is "PuriCoin".
 // Keep the artifact name and deployment record consistent across:
 // - deploy scripts
@@ -212,12 +143,9 @@ async function main() {
   );
 
   // PuriCoin constructor:
-  // constructor(address identityRegistry_, address compliance_, uint8 decimals_)
   const decimals = TOKEN_DECIMAL;
 
   const puricoin = await PuritokenFactory.deploy(
-    identityAddress,
-    complianceAddress,
     decimals,
   );
 

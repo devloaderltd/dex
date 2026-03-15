@@ -31,7 +31,6 @@ export interface PurDexStakingRewardsInterface extends Interface {
       | "earned"
       | "exit"
       | "getReward"
-      | "identityRegistry"
       | "initialize"
       | "lastTimeRewardApplicable"
       | "lastUpdateTime"
@@ -79,12 +78,8 @@ export interface PurDexStakingRewardsInterface extends Interface {
   encodeFunctionData(functionFragment: "exit", values?: undefined): string;
   encodeFunctionData(functionFragment: "getReward", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "identityRegistry",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "lastTimeRewardApplicable",
@@ -170,10 +165,6 @@ export interface PurDexStakingRewardsInterface extends Interface {
   decodeFunctionResult(functionFragment: "earned", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "exit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getReward", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "identityRegistry",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "lastTimeRewardApplicable",
@@ -421,13 +412,10 @@ export interface PurDexStakingRewards extends BaseContract {
 
   getReward: TypedContractMethod<[], [void], "nonpayable">;
 
-  identityRegistry: TypedContractMethod<[], [string], "view">;
-
   initialize: TypedContractMethod<
     [
       _stakingToken: AddressLike,
       _rewardsToken: AddressLike,
-      _identityRegistry: AddressLike,
       _duration: BigNumberish
     ],
     [void],
@@ -520,15 +508,11 @@ export interface PurDexStakingRewards extends BaseContract {
     nameOrSignature: "getReward"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "identityRegistry"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
     [
       _stakingToken: AddressLike,
       _rewardsToken: AddressLike,
-      _identityRegistry: AddressLike,
       _duration: BigNumberish
     ],
     [void],

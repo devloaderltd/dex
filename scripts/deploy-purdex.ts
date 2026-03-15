@@ -45,35 +45,14 @@ if (p?.request) {
 
   const { file, json: dep } = loadDeployment(network.name);
   const pur = dep.contracts?.PuriCoin?.address;
-  const identityRegistry = dep.contracts?.IdentityRegistry?.address;
   const navOracle = dep.contracts?.NAVOracle?.address;
-  if (!pur || !identityRegistry) {
-    throw new Error("deployments/<network>.json must include PuriCoin and IdentityRegistry addresses");
+  if (!pur) {
+    throw new Error("deployments/<network>.json must include PuriCoin addresses");
   }
 
   // As requested: use the deployer as the treasury + admin.
   const treasury = deployer.address;
   console.log(`Treasury (feeTo + admin): ${treasury}`);
-
-  // --- 1) Deploy KYC Manager (UUPS proxy) ---
-  const kycSigner = process.env.KYC_SIGNER_ADDRESS || deployer.address;
-  const KYC = await ethers.getContractFactory("PurDexKYCManager");
-  const kyc = await upgrades.deployProxy(KYC, [identityRegistry, kycSigner], {
-    kind: "uups",
-    // We intentionally keep a constructor that calls _disableInitializers() to lock the implementation.
-    // OZ docs recommend this pattern and allow it via the unsafe-allow option.
-    unsafeAllow: ["constructor"],
-  });
-  await kyc.waitForDeployment();
-  const kycAddr = await kyc.getAddress();
-  const kycImpl = await upgrades.erc1967.getImplementationAddress(kycAddr);
-  console.log("PurDexKYCManager:", kycAddr);
-
-  // Make KYC manager a KYCAgent on your already deployed IdentityRegistry
-  const idReg = await ethers.getContractAt("IdentityRegistry", identityRegistry);
-  const txAgent = await idReg.setKYCAgent(kycAddr, true);
-  await txAgent.wait();
-  console.log("IdentityRegistry: setKYCAgent(KYCManager,true)");
 
   // --- 2) Deploy WETH ---
   const WETH9 = await ethers.getContractFactory("WETH9");
@@ -97,7 +76,7 @@ if (p?.request) {
 
   // --- 4) Deploy Factory (UUPS proxy) ---
   const Factory = await ethers.getContractFactory("PurDexFactory");
-  const factory = await upgrades.deployProxy(Factory, [treasury, kycAddr, pairBeaconAddr], {
+  const factory = await upgrades.deployProxy(Factory, [treasury, pairBeaconAddr], {
     kind: "uups",
     unsafeAllow: ["constructor"],
   });
@@ -105,11 +84,6 @@ if (p?.request) {
   const factoryAddr = await factory.getAddress();
   const factoryImpl = await upgrades.erc1967.getImplementationAddress(factoryAddr);
   console.log("PurDexFactory (proxy):", factoryAddr);
-
-  // Wire factory into KYC manager (so Factory can auto-register pairs)
-  const txSetFactory = await kyc.setFactory(factoryAddr);
-  await txSetFactory.wait();
-  console.log("KYCManager: setFactory(factory)");
 
   // feeTo -> treasury
   await (await factory.setFeeTo(treasury)).wait();
@@ -119,7 +93,7 @@ if (p?.request) {
   const Router = await ethers.getContractFactory("PurDexRouter");
   const router = await upgrades.deployProxy(
     Router,
-    [factoryAddr, wethAddr, pur, identityRegistry],
+    [factoryAddr, wethAddr, pur],
     { kind: "uups", unsafeAllow: ["constructor"] }
   );
   await router.waitForDeployment();
@@ -127,13 +101,7 @@ if (p?.request) {
   const routerImpl = await upgrades.erc1967.getImplementationAddress(routerAddr);
   console.log("PurDexRouter (proxy):", routerAddr);
 
-  // Optional: register core DEX contracts as verified (not required, but harmless)
-  await (await kyc.registerDexContract(factoryAddr)).wait();
-  await (await kyc.registerDexContract(routerAddr)).wait();
-  await (await kyc.registerDexContract(wethAddr)).wait();
-  console.log("KYCManager: registered factory/router/weth as verified addresses");
-
-  // --- 6) Create the initial PUR/WETH pair (auto-registered by the factory hook) ---
+  // --- 6) Create the initial PUR/WETH pair ---
   await (await factory.createPair(pur, wethAddr)).wait();
   const pairAddr = await factory.getPair(pur, wethAddr);
   console.log("PUR/WETH Pair:", pairAddr);
@@ -143,16 +111,13 @@ if (p?.request) {
   const Staking = await ethers.getContractFactory("PurDexStakingRewards");
   const staking = await upgrades.deployProxy(
     Staking,
-    [pairAddr, pur, identityRegistry, rewardsDuration],
+    [pairAddr, pur, rewardsDuration],
     { kind: "uups", unsafeAllow: ["constructor"] }
   );
   await staking.waitForDeployment();
   const stakingAddr = await staking.getAddress();
   const stakingImpl = await upgrades.erc1967.getImplementationAddress(stakingAddr);
   console.log("PurDexStakingRewards (proxy):", stakingAddr);
-
-  // Register staking contract as verified (so it can hold/mint PUR)
-  await (await kyc.registerDexContract(stakingAddr)).wait();
 
   // Give staking contract agent role so it can mint rewards (optional feature)
   const purToken = await ethers.getContractAt("PuriCoin", pur);
@@ -172,7 +137,7 @@ if (p?.request) {
   console.log("PurDexOracleRouter (proxy):", oracleAddr);
 
   const Lending = await ethers.getContractFactory("PurDexLendingPool");
-  const lending = await upgrades.deployProxy(Lending, [pur, wethAddr, identityRegistry, oracleAddr], {
+  const lending = await upgrades.deployProxy(Lending, [pur, wethAddr, oracleAddr], {
     kind: "uups",
     unsafeAllow: ["constructor"],
   });
@@ -181,17 +146,8 @@ if (p?.request) {
   const lendingImpl = await upgrades.erc1967.getImplementationAddress(lendingAddr);
   console.log("PurDexLendingPool (proxy):", lendingAddr);
 
-  await (await kyc.registerDexContract(lendingAddr)).wait();
-  console.log("KYCManager: registered lending pool as verified address");
-
   // --- 8) Persist deployment info ---
   const extra = {
-    PurDexKYCManager: {
-      address: kycAddr,
-      proxy: true,
-      implementation: kycImpl,
-      initializerArguments: [identityRegistry, kycSigner],
-    },
     WETH9: { address: wethAddr, constructorArguments: [] },
     PurDexPairImplementation: { address: pairImplAddr, constructorArguments: [] },
     PurDexPairBeacon: { address: pairBeaconAddr, constructorArguments: [pairImplAddr] },
@@ -199,20 +155,20 @@ if (p?.request) {
       address: factoryAddr,
       proxy: true,
       implementation: factoryImpl,
-      initializerArguments: [treasury, kycAddr, pairBeaconAddr],
+      initializerArguments: [treasury, pairBeaconAddr],
     },
     PurDexRouter: {
       address: routerAddr,
       proxy: true,
       implementation: routerImpl,
-      initializerArguments: [factoryAddr, wethAddr, pur, identityRegistry],
+      initializerArguments: [factoryAddr, wethAddr, pur],
     },
     PurDexPair_PUR_WETH: { address: pairAddr, constructorArguments: [] },
     PurDexStakingRewards: {
       address: stakingAddr,
       proxy: true,
       implementation: stakingImpl,
-      initializerArguments: [pairAddr, pur, identityRegistry, rewardsDuration],
+      initializerArguments: [pairAddr, pur, rewardsDuration],
     },
     PurDexOracleRouter: {
       address: oracleAddr,
@@ -224,7 +180,7 @@ if (p?.request) {
       address: lendingAddr,
       proxy: true,
       implementation: lendingImpl,
-      initializerArguments: [pur, wethAddr, identityRegistry, oracleAddr],
+      initializerArguments: [pur, wethAddr, oracleAddr],
       params: {
         variableRate: { base: "2%", slope: "20%" },
         collateral: "ETH-only",

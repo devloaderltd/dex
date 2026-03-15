@@ -35,7 +35,6 @@ export interface PurDexRouterInterface extends Interface {
       | "getAmountOut"
       | "getAmountsIn"
       | "getAmountsOut"
-      | "identityRegistry"
       | "initialize"
       | "owner"
       | "proxiableUUID"
@@ -107,12 +106,8 @@ export interface PurDexRouterInterface extends Interface {
     values: [BigNumberish, AddressLike[]]
   ): string;
   encodeFunctionData(
-    functionFragment: "identityRegistry",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -221,10 +216,6 @@ export interface PurDexRouterInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getAmountsOut",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "identityRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -457,15 +448,8 @@ export interface PurDexRouter extends BaseContract {
     "view"
   >;
 
-  identityRegistry: TypedContractMethod<[], [string], "view">;
-
   initialize: TypedContractMethod<
-    [
-      _factory: AddressLike,
-      _weth: AddressLike,
-      _pur: AddressLike,
-      _identityRegistry: AddressLike
-    ],
+    [_factory: AddressLike, _weth: AddressLike, _pur: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -669,17 +653,9 @@ export interface PurDexRouter extends BaseContract {
     "view"
   >;
   getFunction(
-    nameOrSignature: "identityRegistry"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [
-      _factory: AddressLike,
-      _weth: AddressLike,
-      _pur: AddressLike,
-      _identityRegistry: AddressLike
-    ],
+    [_factory: AddressLike, _weth: AddressLike, _pur: AddressLike],
     [void],
     "nonpayable"
   >;
