@@ -22,23 +22,6 @@ function mergeDeployment(file: string, existing: any, extraContracts: any) {
 }
 
 async function main() {
-  // Fix bad RPCs that return `to: ""` for contract-creation txs.
-// Spec requires `to: null` for contract creation.
-const p: any = network.provider;
-
-if (p?.request) {
-  const orig = p.request.bind(p);
-  p.request = async (args: { method: string; params?: any[] }) => {
-    const res = await orig(args);
-    if (
-      (args.method === "eth_getTransactionByHash" || args.method === "eth_getTransactionReceipt") &&
-      res && typeof res === "object" && (res as any).to === ""
-    ) {
-      (res as any).to = null;
-    }
-    return res;
-  };
-}
   const [deployer] = await ethers.getSigners();
   console.log(`Network: ${network.name}`);
   console.log(`Deployer: ${deployer.address}`);

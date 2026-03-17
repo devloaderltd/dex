@@ -10,10 +10,7 @@
     "smoke:sepolia": "hardhat run scripts/smoke-sepolia.ts --network sepolia",
     "verify:sepolia": "hardhat run scripts/verify.ts --network sepolia",
     "export-abis": "hardhat run scripts/export-abis.ts",
-
-
-    
-     "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "lint:sol": "solhint \"contracts/**/*.sol\"",
     "lint:ts": "eslint \"{scripts,test}/**/*.{ts,js}\"",
     "test:fork": "hardhat test test/fork --network hardhat",
     "coverage": "hardhat coverage",
@@ -24,17 +21,17 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0",
     "@types/node": "^20.11.0",
     "dotenv": "^16.4.0",
     "hardhat": "^2.28.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.0",
-    "@openzeppelin/hardhat-upgrades": "^3.9.0"
+    "typescript": "^5.4.0"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.7.1",
     "@openzeppelin/contracts": "^4.9.6",
-    "ethers": "^6.16.0",
-    "@openzeppelin/contracts-upgradeable": "^4.9.6"
+    "@openzeppelin/contracts-upgradeable": "^4.9.6",
+    "ethers": "^6.16.0"
   }
 }
