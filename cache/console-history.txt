@@ -1,15 +1,0 @@
-EXIT
-await router.version()
-const router = await ethers.getContractAt("PurDexRouter", dep.contracts.PurDexRouter.address);
-const dep = JSON.parse(require("fs").readFileSync("deployments/sepolia.json","utf8"));
-exit
-console.log("✅ addLiquidityETH success");
-)).wait();  { value: ethLiquidity }  deadline,  deployer.address,  ethLiquidity * 99n/100n,  purLiquidity * 99n/100n,  purLiquidity,  PUR,await (await router.addLiquidityETH(
-await (await pur.approve(dep.PurDexRouter.address, purLiquidity)).wait();
-const deadline = Math.floor(Date.now()/1000) + 1200;
-const ethLiquidity = ethers.parseEther("0.05");
-const purLiquidity = ethers.parseUnits("5000", 18);
-const [deployer] = await ethers.getSigners();
-const compAddr = await pur.compliance();console.log("Compliance:", compAddr);const comp = await ethers.getContractAt("BasicCompliance", compAddr);console.log("paused:", await comp.paused());console.log("blacklist(pair):", await comp.blacklist(pair));console.log("blacklist(router):", await comp.blacklist(dep.PurDexRouter.address));
-await (await kyc.registerDexContract(pair)).wait();console.log("isVerified(pair) now:", await idReg.isVerified(pair));
-const fs = require("fs");const dep = JSON.parse(fs.readFileSync("deployments/sepolia.json","utf8")).contracts;const PUR = dep.PuriCoin.address;const IDREG = dep.IdentityRegistry.address;const factory = await ethers.getContractAt("PurDexFactory", dep.PurDexFactory.address);const router  = await ethers.getContractAt("PurDexRouter", dep.PurDexRouter.address);const kyc     = await ethers.getContractAt("PurDexKYCManager", dep.PurDexKYCManager.address);const idReg   = await ethers.getContractAt("IdentityRegistry", IDREG);const pur     = await ethers.getContractAt("PuriCoin", PUR);const pair = await factory.getPair(PUR, dep.WETH9.address);console.log("PAIR:", pair);console.log("isVerified(deployer):", await idReg.isVerified((await ethers.getSigners())[0].address));console.log("isVerified(router):", await idReg.isVerified(dep.PurDexRouter.address));console.log("isVerified(pair):", await idReg.isVerified(pair));
