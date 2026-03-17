@@ -228,7 +228,14 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
     {
         (uint256 ethPrice, ) = oracle.ethUsdPrice();
         (uint256 purPrice, ) = oracle.purUsdPrice();
+        return _accountLiquidity(user, ethPrice, purPrice);
+    }
 
+    function _accountLiquidity(address user, uint256 ethPrice, uint256 purPrice)
+        internal
+        view
+        returns (uint256 collateralUsd, uint256 debtUsd, uint256 maxBorrowUsd, bool liquidatable)
+    {
         collateralUsd = (collateralWeth[user] * ethPrice) / WAD;
         uint256 debtPur = borrowBalanceCurrent(user);
         debtUsd = (debtPur * purPrice) / WAD;
@@ -358,15 +365,18 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
         if (repayAmount == 0) revert LP__ZeroAmount();
 
         accrueInterest();
-        (, , , bool liquidatable) = accountLiquidity(borrower);
+
+        // OPTIMIZATION: Fetch oracle prices once and reuse them for accountLiquidity and liquidation calculations.
+        // This avoids 2 redundant external calls to the oracle router.
+        (uint256 ethPrice, ) = oracle.ethUsdPrice();
+        (uint256 purPrice, ) = oracle.purUsdPrice();
+
+        (, , , bool liquidatable) = _accountLiquidity(borrower, ethPrice, purPrice);
         if (!liquidatable) revert LP__NotLiquidatable();
 
         uint256 debt = borrowBalanceCurrent(borrower);
         uint256 actualRepay = repayAmount > debt ? debt : repayAmount;
         require(actualRepay > 0, "NO_DEBT");
-
-        (uint256 ethPrice, ) = oracle.ethUsdPrice();
-        (uint256 purPrice, ) = oracle.purUsdPrice();
 
         uint256 repayUsd = (actualRepay * purPrice) / WAD;
         uint256 seizeUsd = (repayUsd * (BPS + liquidationBonusBps)) / BPS;
@@ -389,8 +399,12 @@ contract PurDexLendingPool is Initializable, OwnableUpgradeable, ReentrancyGuard
 
     // --- internal health checks ---
     function _canBorrow(address borrower, uint256 additionalPur) internal view returns (bool) {
-        (uint256 collateralUsd, uint256 debtUsd, uint256 maxBorrowUsd, ) = accountLiquidity(borrower);
+        // OPTIMIZATION: Fetch prices once to avoid redundant external call in accountLiquidity.
+        (uint256 ethPrice, ) = oracle.ethUsdPrice();
         (uint256 purPrice, ) = oracle.purUsdPrice();
+
+        (uint256 collateralUsd, uint256 debtUsd, uint256 maxBorrowUsd, ) = _accountLiquidity(borrower, ethPrice, purPrice);
+
         uint256 addUsd = (additionalPur * purPrice) / WAD;
         if (collateralUsd == 0) return false;
         return debtUsd + addUsd <= maxBorrowUsd;
