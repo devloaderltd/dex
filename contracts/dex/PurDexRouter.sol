@@ -209,7 +209,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
     }
 
     // --- swaps ---
-    function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
+    function _swap(uint256[] memory amounts, address[] memory path, address _to, address currentPair) internal {
         for (uint256 i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
@@ -218,11 +218,17 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
 
-            address to = i < path.length - 2
-                ? IPurDexFactory(factory).getPair(output, path[i + 2])
-                : _to;
+            address nextPair;
+            address to;
+            if (i < path.length - 2) {
+                nextPair = IPurDexFactory(factory).getPair(output, path[i + 2]);
+                to = nextPair;
+            } else {
+                to = _to;
+            }
 
-            IPurDexPair(IPurDexFactory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
+            IPurDexPair(currentPair).swap(amount0Out, amount1Out, to, new bytes(0));
+            currentPair = nextPair;
         }
     }
 
@@ -242,7 +248,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
         address pair = IPurDexFactory(factory).getPair(mpath[0], mpath[1]);
         mpath[0].safeTransferFrom(msg.sender, pair, amounts[0]);
-        _swap(amounts, mpath, to);
+        _swap(amounts, mpath, to, pair);
     }
 
     function swapExactETHForTokens(
@@ -262,7 +268,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         IWETH(WETH).deposit{value: amounts[0]}();
         address pair = IPurDexFactory(factory).getPair(mpath[0], mpath[1]);
         WETH.safeTransfer(pair, amounts[0]);
-        _swap(amounts, mpath, to);
+        _swap(amounts, mpath, to, pair);
     }
 
     function swapExactTokensForETH(
@@ -282,7 +288,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
         address pair = IPurDexFactory(factory).getPair(mpath[0], mpath[1]);
         mpath[0].safeTransferFrom(msg.sender, pair, amounts[0]);
-        _swap(amounts, mpath, address(this));
+        _swap(amounts, mpath, address(this), pair);
         uint256 amountOut = amounts[amounts.length - 1];
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
@@ -307,7 +313,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
         IWETH(WETH).deposit{value: amounts[0]}();
         address pair = IPurDexFactory(factory).getPair(path[0], path[1]);
         WETH.safeTransfer(pair, amounts[0]);
-        _swap(amounts, path, to);
+        _swap(amounts, path, to, pair);
     }
 
     /// @notice Swap PUR directly to native ETH (internally unwraps WETH).
@@ -328,7 +334,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
         address pair = IPurDexFactory(factory).getPair(path[0], path[1]);
         path[0].safeTransferFrom(msg.sender, pair, amounts[0]);
-        _swap(amounts, path, address(this));
+        _swap(amounts, path, address(this), pair);
         uint256 amountOut = amounts[amounts.length - 1];
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
