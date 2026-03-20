@@ -1,0 +1,3 @@
+## 2024-05-24 - Cache `getPair` external calls in Router
+**Learning:** In the PurDex architecture, AMM pair addresses cannot be computed locally via CREATE2 hash because they are deployed as `BeaconProxy` instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`, which incurs extra gas. The `PurDexRouter._swap` loop was redundantly querying `getPair(input, output)` even though the calling functions already fetched it, and calculating the next pair twice.
+**Action:** When iterating over a path in the router, always cache the current pair address (often fetched by the caller) and only call `getPair` once for the *next* pair in the loop, passing it forward to avoid redundant external state reads.
