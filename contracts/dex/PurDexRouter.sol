@@ -210,6 +210,10 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
     // --- swaps ---
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
+        // ⚡ Bolt: Cache currentPair to avoid redundant external calls to Factory.getPair()
+        // Because pairs are BeaconProxies, address cannot be computed locally via CREATE2.
+        address currentPair = IPurDexFactory(factory).getPair(path[0], path[1]);
+
         for (uint256 i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
@@ -218,11 +222,15 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
 
-            address to = i < path.length - 2
-                ? IPurDexFactory(factory).getPair(output, path[i + 2])
-                : _to;
+            address to = _to;
+            address nextPair;
+            if (i < path.length - 2) {
+                nextPair = IPurDexFactory(factory).getPair(output, path[i + 2]);
+                to = nextPair;
+            }
 
-            IPurDexPair(IPurDexFactory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
+            IPurDexPair(currentPair).swap(amount0Out, amount1Out, to, new bytes(0));
+            currentPair = nextPair;
         }
     }
 
