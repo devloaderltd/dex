@@ -1,0 +1,3 @@
+## 2024-05-24 - Cache BeaconProxy address resolution in multi-hop loops
+**Learning:** In the PurDex architecture, AMM pair addresses cannot be computed locally via CREATE2 hash because they are deployed as `BeaconProxy` instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`. In multi-hop routing, this leads to redundant external calls when calculating the "to" address and the "current pair" for the next swap.
+**Action:** When working with BeaconProxy-based AMM architectures, always cache the pair address obtained from the factory and propagate it to the next loop iteration in multi-hop algorithms to avoid redundant gas costs from repetitive external calls.
