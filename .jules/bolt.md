@@ -1,0 +1,3 @@
+## 2024-05-24 - [Avoid Local CREATE2 Computation for BeaconProxy Pairs]
+**Learning:** In the PurDex architecture, AMM pair addresses cannot be computed locally via CREATE2 hash because they are deployed as `BeaconProxy` instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`. This means standard UniswapV2-style local address computation optimizations will fail or revert here.
+**Action:** Always fetch pair addresses via `IPurDexFactory(factory).getPair()` and cache or pass them along in multi-hop loops (like in the Router's `_swap` function) to avoid redundant, expensive external calls and gas costs.
