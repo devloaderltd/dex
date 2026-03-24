@@ -1,0 +1,3 @@
+## 2024-05-24 - BeaconProxy Multi-Hop Gas Optimization
+**Learning:** In the PurDex architecture, AMM pair addresses cannot be computed locally via CREATE2 hash because they are deployed as BeaconProxy instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`, which incurs a gas penalty during multi-hop swaps when resolved redundantly.
+**Action:** When implementing iterative or multi-hop logic over AMM pairs in this codebase, cache and pass the resolved pair address (`currentPair`, `nextPair`) between loop iterations to halve the number of external `getPair()` contract calls.
