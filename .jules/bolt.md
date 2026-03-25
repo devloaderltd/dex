@@ -1,0 +1,3 @@
+## 2024-05-24 - BeaconProxy Pair Address Caching
+**Learning:** In the PurDex architecture, AMM pairs are deployed as `BeaconProxy` instances rather than standard clones. This completely prevents calculating pair addresses locally via CREATE2 hashes. Fetching pair addresses requires an external call to `IPurDexFactory.getPair()`, which is gas-heavy, especially in multi-hop loops.
+**Action:** When working on multi-hop operations (like Router `_swap`), avoid redundant `getPair()` calls by caching the next pair's address during the loop. Pass the initial `currentPair` directly to the method, look up `nextPair` via the Factory, and use it as both the destination `to` address and the `currentPair` for the next loop iteration.
