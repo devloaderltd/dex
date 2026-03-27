@@ -1,0 +1,3 @@
+## 2024-05-17 - Cached Pair Address in PurDexRouter Swaps
+**Learning:** In PurDex, AMM pairs are deployed as `BeaconProxy` instances instead of standard `CREATE2` deterministic addresses. This means `IPurDexFactory(factory).getPair(tokenA, tokenB)` cannot be computed locally with a `keccak256` hash and requires an actual external contract call. When looping over paths in `_swap`, failing to cache this address leads to redundant, expensive cross-contract calls.
+**Action:** Always cache pair addresses locally in memory when looping through multi-hop swaps in PurDex to avoid repeating the external `getPair` call. Passed the next pair reference along to avoid duplicate fetches for `to` and `pair`.
