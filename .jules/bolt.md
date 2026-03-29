@@ -1,0 +1,3 @@
+## 2024-03-29 - PurDexRouter Multi-Hop Swap Gas Optimization
+**Learning:** In the PurDex architecture, unlike Uniswap V2, AMM pair addresses cannot be computed locally via CREATE2 hash because they are deployed as `BeaconProxy` instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`. During multi-hop swaps in `_swap`, failing to cache this external call resulted in redundant `SLOAD + CALL` overheads per hop, as the `to` parameter calculation re-evaluates `getPair` for the same tokens.
+**Action:** When iterating over paths in multi-hop functions (like `_swap`), always cache the next `pair` address into a local variable and carry it over to the next loop iteration to avoid making redundant external calls to the factory.

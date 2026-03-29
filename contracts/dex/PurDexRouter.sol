@@ -63,7 +63,8 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
     // --- KYC helpers ---
     function _pathTouchesPUR(address[] memory path) internal view returns (bool) {
         address pur = PUR;
-        for (uint256 i = 0; i < path.length; i++) {
+        uint256 length = path.length;
+        for (uint256 i = 0; i < length; i++) {
             if (path[i] == pur) return true;
         }
         return false;
@@ -210,7 +211,11 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
     // --- swaps ---
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
-        for (uint256 i = 0; i < path.length - 1; i++) {
+        uint256 length = path.length;
+        // Cache the first pair to avoid redundant external calls in multi-hop swaps
+        address currentPair = IPurDexFactory(factory).getPair(path[0], path[1]);
+
+        for (uint256 i = 0; i < length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -218,11 +223,18 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
 
-            address to = i < path.length - 2
-                ? IPurDexFactory(factory).getPair(output, path[i + 2])
-                : _to;
+            address to;
+            address nextPair;
+            if (i < length - 2) {
+                // Fetch the next pair and cache it for the next iteration
+                nextPair = IPurDexFactory(factory).getPair(output, path[i + 2]);
+                to = nextPair;
+            } else {
+                to = _to;
+            }
 
-            IPurDexPair(IPurDexFactory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
+            IPurDexPair(currentPair).swap(amount0Out, amount1Out, to, new bytes(0));
+            currentPair = nextPair; // Use cached pair for the next hop
         }
     }
 
