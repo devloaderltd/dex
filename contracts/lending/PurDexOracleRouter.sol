@@ -101,6 +101,7 @@ contract PurDexOracleRouter is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         }
         (, int256 answer, , uint256 updated, ) = ethUsdFeed.latestRoundData();
         if (answer <= 0) revert Oracle__BadAnswer();
+        if (updated == 0) revert Oracle__Stale();
         updatedAt = updated;
         if (maxAge > 0 && updatedAt + maxAge < block.timestamp) revert Oracle__Stale();
         uint8 d = ethUsdFeed.decimals();
@@ -113,6 +114,7 @@ contract PurDexOracleRouter is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         }
         (uint256 nav, uint8 d, uint256 updated, ) = purUsdOracle.latestNAV();
         if (nav == 0) revert Oracle__BadAnswer();
+        if (updated == 0) revert Oracle__Stale();
         updatedAt = updated;
         if (maxAge > 0 && updatedAt + maxAge < block.timestamp) revert Oracle__Stale();
         price1e18 = _scaleTo1e18(nav, d);
