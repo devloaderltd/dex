@@ -28,6 +28,7 @@ contract PurDexKYCManager is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     error KYC__Expired();
     error KYC__ZeroAddress();
     error KYC__NotAuthorized();
+    error KYC__RegistrationFailed();
 
     IIdentityRegistry public identityRegistry;
 
@@ -101,7 +102,7 @@ contract PurDexKYCManager is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         (bool ok, ) = address(identityRegistry).call(
             abi.encodeWithSignature("registerInvestor(address,uint16)", user, country)
         );
-        require(ok, "REGISTER_FAILED");
+        if (!ok) revert KYC__RegistrationFailed();
 
         emit InvestorVerified(user, country);
     }
@@ -115,7 +116,7 @@ contract PurDexKYCManager is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         (bool ok, ) = address(identityRegistry).call(
             abi.encodeWithSignature("registerInvestor(address,uint16)", contractAddr, uint16(0))
         );
-        require(ok, "REGISTER_FAILED");
+        if (!ok) revert KYC__RegistrationFailed();
 
         emit DexContractRegistered(contractAddr);
     }
