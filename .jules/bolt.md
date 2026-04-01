@@ -1,0 +1,4 @@
+
+## 2024-04-01 - Optimize multi-step composite functions to reduce redundant modifier execution
+**Learning:** In smart contracts, composite operations (like `exit()` which wraps `withdraw()` and `getReward()`) incur heavy gas costs if the individual wrapped functions are `public` and use expensive modifiers (like `nonReentrant` or state-updating ones like `updateReward(msg.sender)`). The modifiers are executed redundantly.
+**Action:** When a contract has public/external functions with heavy modifiers that are also called by another combined function, split them into an `internal` (logic-only) function without the modifiers, and an `external` wrapper that applies the modifiers. The combined function can then apply the modifiers once and call the internal logic-only functions directly, saving significant gas on redundant storage reads/writes.
