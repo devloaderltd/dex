@@ -1,3 +1,8 @@
 node_modules
 .idea
 .git
+cache/
+typechain-types/
+artifacts/
+coverage/
+node_modules/
