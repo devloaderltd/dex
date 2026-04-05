@@ -1,0 +1,3 @@
+## 2024-04-05 - Avoid Redundant Factory Calls in Multi-Hop Swaps
+**Learning:** Because AMM pairs in this PurDex architecture are deployed via `BeaconProxy` instances rather than `CREATE2`, pair addresses cannot be deterministically computed locally. Therefore, `IPurDexFactory.getPair` incurs an external call overhead. In multi-hop routing, failing to cache the resolved pair address results in duplicate external calls for intermediate pairs.
+**Action:** Always cache array lengths in loops, and in multi-hop traversal logic, carry forward the intermediate pair resolution (`nextPair` becomes `currentPair` in the next iteration) to avoid hitting the factory redundantly.
