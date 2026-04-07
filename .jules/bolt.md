@@ -1,0 +1,3 @@
+## 2026-04-07 - [Optimize multi-hop pair resolution in Router]
+**Learning:** In the PurDex architecture, AMM pair addresses cannot be computed locally via CREATE2 hash because they are deployed as `BeaconProxy` instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`. When performing multi-hop swaps (e.g. A -> B -> C), the `getPair` resolution needs to be chained and caching the next lookup avoids redundant external reads.
+**Action:** When working with BeaconProxy-based AMM factories, always cache the pair address across multi-hop iterations or pass it dynamically as a parameter, as they cannot be deterministically computed locally and avoiding redundant external calls saves significant gas.
