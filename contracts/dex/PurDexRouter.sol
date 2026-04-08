@@ -63,7 +63,9 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
     // --- KYC helpers ---
     function _pathTouchesPUR(address[] memory path) internal view returns (bool) {
         address pur = PUR;
-        for (uint256 i = 0; i < path.length; i++) {
+        // ⚡ Bolt: Cache path.length to avoid redundant MLOADs and save gas
+        uint256 length = path.length;
+        for (uint256 i = 0; i < length; i++) {
             if (path[i] == pur) return true;
         }
         return false;
@@ -210,7 +212,9 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
     // --- swaps ---
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
-        for (uint256 i = 0; i < path.length - 1; i++) {
+        // ⚡ Bolt: Cache path.length to avoid redundant MLOADs and save gas
+        uint256 length = path.length;
+        for (uint256 i = 0; i < length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -218,7 +222,7 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
 
-            address to = i < path.length - 2
+            address to = i < length - 2
                 ? IPurDexFactory(factory).getPair(output, path[i + 2])
                 : _to;
 
