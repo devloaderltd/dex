@@ -63,7 +63,9 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
     // --- KYC helpers ---
     function _pathTouchesPUR(address[] memory path) internal view returns (bool) {
         address pur = PUR;
-        for (uint256 i = 0; i < path.length; i++) {
+        // Bolt: Cache array length to save MLOAD gas on each iteration
+        uint256 pathLength = path.length;
+        for (uint256 i = 0; i < pathLength; i++) {
             if (path[i] == pur) return true;
         }
         return false;
@@ -210,7 +212,13 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
     // --- swaps ---
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
-        for (uint256 i = 0; i < path.length - 1; i++) {
+        // Bolt: Cache array length to save MLOAD gas on each iteration
+        uint256 pathLength = path.length;
+
+        // Bolt: Look up the initial pair address once
+        address currentPair = IPurDexFactory(factory).getPair(path[0], path[1]);
+
+        for (uint256 i = 0; i < pathLength - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -218,11 +226,17 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
 
-            address to = i < path.length - 2
-                ? IPurDexFactory(factory).getPair(output, path[i + 2])
-                : _to;
+            address to = _to;
+            address nextPair = address(0);
+            if (i < pathLength - 2) {
+                // Bolt: Fetch the next pair and use it as `to` address to avoid redundant `getPair` calls
+                nextPair = IPurDexFactory(factory).getPair(output, path[i + 2]);
+                to = nextPair;
+            }
 
-            IPurDexPair(IPurDexFactory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
+            IPurDexPair(currentPair).swap(amount0Out, amount1Out, to, new bytes(0));
+            // Bolt: Advance the cached pair address to the next pair for the next iteration
+            currentPair = nextPair;
         }
     }
 
