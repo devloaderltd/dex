@@ -210,7 +210,12 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
 
     // --- swaps ---
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal {
-        for (uint256 i = 0; i < path.length - 1; i++) {
+        // Optimization: Cache path length to save gas in loop condition
+        uint256 length = path.length;
+        // Optimization: Fetch first pair once, then reuse the 'to' address for the next iteration's pair
+        address currentPair = IPurDexFactory(factory).getPair(path[0], path[1]);
+
+        for (uint256 i = 0; i < length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0, ) = PurDexLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -218,11 +223,18 @@ contract PurDexRouter is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
 
-            address to = i < path.length - 2
-                ? IPurDexFactory(factory).getPair(output, path[i + 2])
-                : _to;
+            address to;
+            if (i < length - 2) {
+                // Optimization: Resolve the next pair, and pass it as 'to', saving a redundant factory call in the next iteration
+                to = IPurDexFactory(factory).getPair(output, path[i + 2]);
+            } else {
+                to = _to;
+            }
 
-            IPurDexPair(IPurDexFactory(factory).getPair(input, output)).swap(amount0Out, amount1Out, to, new bytes(0));
+            address pairToSwap = currentPair;
+            currentPair = to; // carry over 'to' to be 'currentPair' in the next iteration
+
+            IPurDexPair(pairToSwap).swap(amount0Out, amount1Out, to, new bytes(0));
         }
     }
 
