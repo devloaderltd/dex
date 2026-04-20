@@ -1,0 +1,3 @@
+## 2024-04-20 - Replace Public Functions with External and Internal Helpers in Staking Contract
+**Learning:** In PurDexStakingRewards.sol, external calls to `exit()` triggered redundant `SLOAD`/`SSTORE` operations due to overlapping modifiers (`nonReentrant`, `updateReward`) on child `public` functions.
+**Action:** Always replace `public` functions with `external` equivalents for direct calls, and use an internal `_function` helper for contract-internal reuse. Consolidate modifiers like `nonReentrant` or state-changing hooks on the outer external boundary to avoid duplicating execution costs during multi-step functions like `exit()`.
