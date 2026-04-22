@@ -1,0 +1,3 @@
+## 2026-04-22 - [Gas Optimization: Cache Memory Array Lengths]
+**Learning:** In Solidity, reading an array's length (e.g., `path.length`) from memory inside a loop condition is relatively cheap but doing it continuously in multi-hop structures (like AMM swap loops) accumulates redundant `MLOAD` gas costs. Although the memory array length is dynamic in nature, inside a synchronous `for` loop it does not change.
+**Action:** Always extract `path.length` into a local variable (e.g., `uint256 length = path.length`) before the loop. This ensures the loop condition relies on an inexpensive local variable instead of repeating memory loads, saving gas across AMM components like `PurDexRouter` and `PurDexLibrary`.
