@@ -1,0 +1,3 @@
+## 2026-04-26 - [Gas optimization: Double Modifier Evaluation]
+**Learning:** In PurDexStakingRewards, calling public functions (like withdraw and getReward) from another public/external function (like exit) that share the same modifiers (like nonReentrant and updateReward) leads to double-evaluation of those modifiers, which is extremely gas inefficient (e.g., redundant SLOAD/SSTORE operations for reentrancy locks and reward updates).
+**Action:** Refactor the core logic into internal functions without modifiers, and have both the individual external endpoints and the aggregated external endpoint call the internal functions. Apply the modifiers only to the external entry points.
