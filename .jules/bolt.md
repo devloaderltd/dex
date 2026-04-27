@@ -1,0 +1,3 @@
+## 2024-04-27 - Caching pair addresses in multi-hop swaps
+**Learning:** In the PurDex AMM architecture, pair addresses cannot be computed locally via CREATE2 hash because they are deployed as `BeaconProxy` instances. Resolving pair addresses requires an external call to `IPurDexFactory.getPair()`, which incurs extra gas costs during iteration.
+**Action:** Implemented a sliding-window caching pattern in `_swap`. By accepting the first `pair` address as an argument and assigning the `nextPair` (`to`) as the `currentPair` at the end of each iteration loop, we eliminate redundant `getPair()` external calls inside the swap loop, substantially reducing gas costs for multi-hop trades.
