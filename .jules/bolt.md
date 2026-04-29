@@ -1,0 +1,3 @@
+## 2024-04-29 - Cache AMM pair address in multi-hop loops
+**Learning:** In the PurDex architecture, computing pair addresses locally via CREATE2 isn't possible because pairs are deployed as `BeaconProxy` contracts. Resolving pair addresses requires calling `IPurDexFactory.getPair()`, which executes an external call.
+**Action:** When implementing iterative logic that moves sequentially through pairs (like multi-hop swaps), pre-calculate the first pair before the loop, and inside the loop use the `to` address calculated for the next iteration as the `currentPair` for the subsequent iteration. This sliding-window caching pattern eliminates redundant external calls to `getPair()` and significantly reduces gas consumption.
