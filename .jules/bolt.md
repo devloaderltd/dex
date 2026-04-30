@@ -1,0 +1,3 @@
+## 2026-04-30 - Prevent Duplicate Modifier Execution
+**Learning:** When public/external functions with modifiers are called internally by another function (e.g., `exit()` calling `withdraw()` and `getReward()`), it causes duplicate modifier execution. In this case, `nonReentrant` and `updateReward(msg.sender)` were executed twice.
+**Action:** Refactor the core logic into internal functions without modifiers (`_withdraw`, `_getReward`) and apply modifiers only to the external entry points. Have the wrapper function (`exit`) apply the modifiers once and call the internal functions. This saves multiple SLOADs and SSTOREs.
