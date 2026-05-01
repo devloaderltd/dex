@@ -1,0 +1,3 @@
+## 2024-05-01 - Consolidate Modifiers and Separate Internal Logic
+**Learning:** Functions that are part of a public interface, but also called internally (e.g., `exit` calling `withdraw` and `getReward`), can lead to redundant modifier executions and unnecessary context bounds checking if they rely on the same modifiers like `nonReentrant` or `updateReward`.
+**Action:** Always refactor `public` methods with complex modifiers into an `external` wrapper and an `internal` core function when they must be called by other contract functions. Apply the modifiers only to the `external` entry points to save gas and improve clarity.
