@@ -118,7 +118,11 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) external nonReentrant updateReward(msg.sender) {
+        _withdraw(amount);
+    }
+
+    function _withdraw(uint256 amount) internal {
         _requireVerified(msg.sender);
         if (amount == 0) revert SR__ZeroAmount();
         _totalSupply -= amount;
@@ -127,7 +131,11 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() external nonReentrant updateReward(msg.sender) {
+        _getReward();
+    }
+
+    function _getReward() internal {
         _requireVerified(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
@@ -137,9 +145,12 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         }
     }
 
-    function exit() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
+    // @dev Gas Optimization: `exit` calls internal versions `_withdraw` and `_getReward`
+    // to apply the `nonReentrant` and `updateReward` modifiers exactly once instead of
+    // redundantly executing them for each public function.
+    function exit() external nonReentrant updateReward(msg.sender) {
+        _withdraw(_balances[msg.sender]);
+        _getReward();
     }
 
     /// @notice Start a new reward period. Can be funded by minting or by pre-funding this contract.
