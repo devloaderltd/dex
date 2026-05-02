@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimize Router _swap loop with sliding-window caching
+**Learning:** Smart contract multi-hop loops involving external factory lookups (`IPurDexFactory(factory).getPair`) are highly gas-intensive due to repeated external calls within the loop body.
+**Action:** Implemented a sliding-window caching pattern where the `nextPair` calculated in iteration `i` becomes the `currentPair` cache for iteration `i+1`. This reduces the number of external `getPair` calls by N-1 in a multi-hop swap and caches state variables (`factory`, `path.length`) to local variables to avoid redundant `SLOAD` and `MLOAD` operations.
