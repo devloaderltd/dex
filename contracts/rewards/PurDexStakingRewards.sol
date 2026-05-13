@@ -74,7 +74,9 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
-            rewards[account] = earned(account);
+            // Inline earned() calculation to use the cached rewardPerTokenStored
+            // instead of calling rewardPerToken() again, saving gas.
+            rewards[account] = ((_balances[account] * (rewardPerTokenStored - userRewardPerTokenPaid[account])) / 1e18) + rewards[account];
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;
