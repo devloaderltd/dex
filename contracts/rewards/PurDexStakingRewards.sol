@@ -74,7 +74,8 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
-            rewards[account] = earned(account);
+            // Inline earned() calculation to use the cached rewardPerTokenStored
+            rewards[account] = ((_balances[account] * (rewardPerTokenStored - userRewardPerTokenPaid[account])) / 1e18) + rewards[account];
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;
@@ -118,8 +119,12 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) external nonReentrant updateReward(msg.sender) {
         _requireVerified(msg.sender);
+        _withdraw(amount);
+    }
+
+    function _withdraw(uint256 amount) internal {
         if (amount == 0) revert SR__ZeroAmount();
         _totalSupply -= amount;
         _balances[msg.sender] -= amount;
@@ -127,8 +132,12 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() external nonReentrant updateReward(msg.sender) {
         _requireVerified(msg.sender);
+        _getReward();
+    }
+
+    function _getReward() internal {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -137,9 +146,10 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         }
     }
 
-    function exit() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
+    function exit() external nonReentrant updateReward(msg.sender) {
+        _requireVerified(msg.sender);
+        _withdraw(_balances[msg.sender]);
+        _getReward();
     }
 
     /// @notice Start a new reward period. Can be funded by minting or by pre-funding this contract.
