@@ -1,0 +1,3 @@
+## 2024-05-22 - Optimize earned calculation in PurDexStakingRewards.sol modifier
+**Learning:** In StakingRewards contracts (like `PurDexStakingRewards.sol`), `earned()` relies on `rewardPerToken()`. The `updateReward` modifier recalculates `rewardPerTokenStored = rewardPerToken();` but then calls `earned(account)`, which in turn calls `rewardPerToken()` again, resulting in an unnecessary extra read and calculation.
+**Action:** Replace the `earned(account)` call inside the `updateReward` modifier with an inline calculation using the newly calculated and cached `rewardPerTokenStored`, avoiding redundant recalculation.
