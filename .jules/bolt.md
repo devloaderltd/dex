@@ -1,0 +1,3 @@
+## 2026-05-24 - Prevent Redundant Modifier Execution in Staking Rewards
+**Learning:** When external-facing functions like `withdraw` and `getReward` use modifiers (e.g. `updateReward`, `nonReentrant`), calling them from a composite function like `exit()` leads to redundant and gas-heavy modifier execution. Also, calculating `earned(account)` inside the `updateReward` modifier redundantly recalculated `rewardPerToken()` instead of using the already cached `rewardPerTokenStored`.
+**Action:** Refactor external-facing functions to call internal helpers without modifiers. Have composite functions (like `exit()`) apply the necessary modifiers once and call the internal helpers directly. Optimize modifier caching by using cached values directly inline.
