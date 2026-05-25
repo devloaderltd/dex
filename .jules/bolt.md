@@ -1,0 +1,3 @@
+## 2024-05-24 - StakingRewards Modifier Redundancy & Caching
+**Learning:** In standard Synthetix-style `StakingRewards` contracts, composite functions like `exit()` that call `withdraw()` and `getReward()` trigger the `nonReentrant` and `updateReward` modifiers multiple times redundantly. Additionally, calling `earned(account)` inside `updateReward` redundantly recalculates `rewardPerToken()`.
+**Action:** Refactor `withdraw` and `getReward` to use internal implementations (`_withdraw`, `_getReward`) and have `exit` call those directly while applying modifiers to `exit` itself. Inline the `earned` calculation inside `updateReward` using the already cached `rewardPerTokenStored` to save gas.
