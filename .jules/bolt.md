@@ -1,0 +1,3 @@
+## 2026-05-26 - Optimize Composite Function Modifiers and Redundant Calculation
+**Learning:** In composite functions like `exit()` that call other external-facing functions (e.g., `withdraw` and `getReward`), modifiers like `nonReentrant` and `updateReward` execute redundantly for each call. Additionally, recalculating state like `rewardPerToken()` immediately after caching it in `rewardPerTokenStored` wastes gas.
+**Action:** Refactor external-facing functions to call internal helpers without modifiers (`_withdraw`, `_getReward`), allowing the composite function to apply modifiers once and call the helpers directly. Inline secondary calculations (like `earned()`) to reuse already-cached state variables.
