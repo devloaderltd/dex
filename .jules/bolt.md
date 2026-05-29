@@ -1,0 +1,3 @@
+## 2026-05-29 - Optimize multi-hop swaps in PurDexRouter
+**Learning:** The `_swap` loop inherently needs to query `getPair` for each hop to know the contract address of the pair. If not cached properly, a multi-hop swap will unnecessarily query `getPair` multiple times for the same pair. E.g. in a A -> B -> C swap, iteration 0 queries `getPair(A, B)` and `getPair(B, C)`, then iteration 1 queries `getPair(B, C)` again.
+**Action:** Utilize a sliding-window caching pattern where the `nextPair` computed during iteration `i` is passed as the `currentPair` for iteration `i+1`. This completely eliminates the redundant external `getPair` calls.
