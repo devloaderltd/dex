@@ -1,0 +1,3 @@
+## 2026-05-31 - Multi-hop Swap Pair Caching Optimization
+**Learning:** During multi-hop swaps (e.g. A -> B -> C), the router previously made a redundant external call to `IPurDexFactory.getPair()` inside the swap loop for the current pair, even though this pair was already resolved in the previous iteration or just before the loop.
+**Action:** Implemented a sliding-window caching pattern in `_swap` by passing `currentPair` as a fourth argument. `currentPair` is updated to the `to` address (the next pair) at the end of each iteration, eliminating the need to query the factory for the current pair, reducing SLOADs and gas costs per hop.
