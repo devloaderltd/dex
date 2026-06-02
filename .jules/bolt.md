@@ -1,0 +1,3 @@
+## 2024-06-02 - Eliminate Redundant External Calls in Multi-Hop Swaps
+**Learning:** During multi-hop AMM swaps, the `nextPair` calculation for iteration `i` results in the exact same pair address required for `currentPair` in iteration `i+1`. Fetching this from the Factory twice per intermediate pair via an external call (`IPurDexFactory.getPair()`) is a significant redundant gas expense.
+**Action:** Use a sliding-window caching pattern by passing the initial `currentPair` into the `_swap` function and updating it at the end of each iteration with the `nextPair` (`to`) address, avoiding redundant external calls.
