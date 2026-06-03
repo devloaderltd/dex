@@ -1,0 +1,3 @@
+## 2024-06-03 - Prevent Redundant Modifiers and State Reads in StakingRewards
+**Learning:** In `PurDexStakingRewards.sol`, the `updateReward` modifier recalculates `rewardPerToken()` by calling `earned()`, even though it just cached `rewardPerTokenStored`. Additionally, the composite `exit()` function calls `withdraw()` and `getReward()`, causing redundant execution of the `nonReentrant` and `updateReward` modifiers.
+**Action:** Inline `earned()` logic inside the `updateReward` modifier using the cached `rewardPerTokenStored`. Refactor `withdraw()` and `getReward()` to use internal helpers (`_withdraw()` and `_getReward()`), and have `exit()` call these helpers directly while applying the modifiers only once.
