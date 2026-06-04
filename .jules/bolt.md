@@ -1,0 +1,3 @@
+## 2024-06-04 - Optimize PurDexStakingRewards Modifiers
+**Learning:** The `updateReward` modifier was calling `earned()` which redundantly called `rewardPerToken()`. Composite functions like `exit()` were triggering modifiers `nonReentrant` and `updateReward` multiple times by calling other public functions (`withdraw()` and `getReward()`).
+**Action:** Inline calculations using cached variables in modifiers to avoid redundant external/public calls. Extract internal helpers (`_withdraw`, `_getReward`) for core logic so composite functions (`exit`) can call them directly with a single set of modifiers.
