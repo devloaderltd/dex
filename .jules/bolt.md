@@ -1,0 +1,3 @@
+## 2026-06-05 - Optimize StakingRewards by reducing redundant modifier executions
+**Learning:** Composite functions like `exit()` that call other external-facing functions (`withdraw()` and `getReward()`) trigger redundant modifier executions (`nonReentrant` and `updateReward`), leading to wasted gas. Inlining reward calculations in modifiers can also skip redundant function calls.
+**Action:** Refactor external-facing functions to wrap internal logic helpers (`_withdraw()`, `_getReward()`). Have composite functions call these internal helpers directly, ensuring modifiers are only executed once.
