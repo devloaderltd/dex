@@ -1,0 +1,4 @@
+
+## 2024-06-06 - Gas Optimization in Staking Rewards
+**Learning:** In composite functions (like `exit()` that call `withdraw()` and `getReward()`), standard modifier inheritance causes redundant state checks (e.g., executing `nonReentrant` and `updateReward` three times). Additionally, calling an external-facing helper (`earned()`) inside a modifier (`updateReward`) can dynamically recalculate values (`rewardPerToken()`) that were just cached in the modifier itself (`rewardPerTokenStored`), wasting gas.
+**Action:** Extract logic of external-facing functions into internal helpers (`_withdraw()`, `_getReward()`). Have the composite function (`exit()`) call the internal helpers directly, and apply the required modifiers to the composite function itself. Also, directly use locally cached variables in modifiers rather than calling helper functions that duplicate the work.
