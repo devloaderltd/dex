@@ -1,0 +1,3 @@
+## 2024-06-11 - Gas optimization for composite functions and modifier calculations
+**Learning:** In contracts like `PurDexStakingRewards.sol`, composite functions like `exit()` that call other public functions (`withdraw`, `getReward`) will execute standard modifiers (`nonReentrant`, `updateReward`) multiple times unnecessarily. Also, calling state-dependent functions like `earned()` inside an `updateReward` loop redundantly recalculates things that the modifier just computed (`rewardPerTokenStored`).
+**Action:** Extract logic into `_internal` functions to bypass redundant modifier execution during composite calls, and inline calculations using the locally cached modifier state to prevent duplicate SLOADs and mathematical ops.
