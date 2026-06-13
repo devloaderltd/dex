@@ -1,0 +1,3 @@
+## 2024-06-13 - Redundant Modifier Execution in Composite Functions
+**Learning:** Composite functions (like `exit()` calling `withdraw()` and `getReward()`) incur significant gas overhead when they call external-facing functions that use expensive modifiers (like `updateReward` and `nonReentrant`). This leads to redundant state reads/writes.
+**Action:** Extract core logic into internal helpers (`_withdraw()`, `_getReward()`) and apply modifiers only once at the composite function level (`exit()`), or have the external functions wrap the internal helpers. Also, avoid redundantly calculating cached values in modifiers.
