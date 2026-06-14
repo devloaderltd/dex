@@ -1,0 +1,3 @@
+## 2024-06-14 - Optimize StakingRewards Modifiers and Re-calculations
+**Learning:** In composite functions like exit() that call other external-facing functions, modifier execution (like nonReentrant and updateReward) is duplicated, wasting gas. Additionally, calling view functions like earned() inside state-modifying modifiers often recalculates values (like rewardPerToken()) that were already cached.
+**Action:** Extract logic into internal functions (_withdraw, _getReward) to bypass redundant modifiers in composite functions. Also, inline calculations using cached values instead of calling view functions that duplicate the work.
