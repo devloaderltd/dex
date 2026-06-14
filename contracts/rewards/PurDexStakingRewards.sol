@@ -74,7 +74,9 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
-            rewards[account] = earned(account);
+            // Bolt: inline earned calculation using already cached rewardPerTokenStored
+            // to avoid redundant view function calls
+            rewards[account] = ((_balances[account] * (rewardPerTokenStored - userRewardPerTokenPaid[account])) / 1e18) + rewards[account];
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;
@@ -118,7 +120,8 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    // Bolt: created internal _withdraw to avoid duplicate modifier execution in composite functions
+    function _withdraw(uint256 amount) internal {
         _requireVerified(msg.sender);
         if (amount == 0) revert SR__ZeroAmount();
         _totalSupply -= amount;
@@ -127,7 +130,12 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+        _withdraw(amount);
+    }
+
+    // Bolt: created internal _getReward to avoid duplicate modifier execution in composite functions
+    function _getReward() internal {
         _requireVerified(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
@@ -137,9 +145,14 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         }
     }
 
-    function exit() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
+    function getReward() public nonReentrant updateReward(msg.sender) {
+        _getReward();
+    }
+
+    // Bolt: apply modifiers once directly, then call internal helpers, saving massive gas
+    function exit() external nonReentrant updateReward(msg.sender) {
+        _withdraw(_balances[msg.sender]);
+        _getReward();
     }
 
     /// @notice Start a new reward period. Can be funded by minting or by pre-funding this contract.
