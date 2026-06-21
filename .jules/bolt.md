@@ -1,0 +1,3 @@
+## 2024-06-21 - Optimize Redundant Modifier and State Access
+**Learning:** In staking contracts using the Synthetix pattern, the `updateReward` modifier calls `earned()`, which redundantly recalculates `rewardPerToken()` despite `rewardPerTokenStored` being just updated. Additionally, composite functions like `exit()` that call external-facing functions (`withdraw` and `getReward`) redundantly execute expensive modifiers (`nonReentrant` and `updateReward`).
+**Action:** Inline the `earned` calculation in `updateReward` using the fresh `rewardPerTokenStored`. Refactor external-facing functions into internal helpers and have composite functions call the helpers directly with a single modifier execution.
