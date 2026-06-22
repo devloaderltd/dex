@@ -1,0 +1,3 @@
+## 2026-06-22 - Swap Multi-hop Sliding-Window Optimization
+**Learning:** In multi-hop token swaps, the `to` address generated in one iteration (which is the pair contract for the next hop) exactly matches the pair address needed for the subsequent iteration. Re-fetching it via an external `getPair()` call inside the loop redundantly consumes gas.
+**Action:** Optimize by passing `address currentPair` as a fourth parameter to `_swap()` and updating it to the calculated `to` address at the end of each iteration to eliminate the redundant external calls. Additionally, cache state variables (`factory`) and array lengths (`path.length`) to avoid repeated SLOADs and MLOADs.
