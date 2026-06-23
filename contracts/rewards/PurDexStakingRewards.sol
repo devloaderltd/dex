@@ -74,7 +74,9 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
-            rewards[account] = earned(account);
+            // ⚡ Bolt: Inlined `earned()` calculation here to reuse the `rewardPerTokenStored` cached above.
+            // This prevents a redundant external-facing call to `rewardPerToken()` which recalculates what we just stored.
+            rewards[account] = ((_balances[account] * (rewardPerTokenStored - userRewardPerTokenPaid[account])) / 1e18) + rewards[account];
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;
@@ -119,6 +121,10 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
     }
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+        _withdraw(amount);
+    }
+
+    function _withdraw(uint256 amount) internal {
         _requireVerified(msg.sender);
         if (amount == 0) revert SR__ZeroAmount();
         _totalSupply -= amount;
@@ -128,6 +134,10 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
     }
 
     function getReward() public nonReentrant updateReward(msg.sender) {
+        _getReward();
+    }
+
+    function _getReward() internal {
         _requireVerified(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
@@ -137,9 +147,12 @@ contract PurDexStakingRewards is Initializable, OwnableUpgradeable, ReentrancyGu
         }
     }
 
-    function exit() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
+    // ⚡ Bolt: `exit()` applies `nonReentrant` and `updateReward` here once, and calls the internal `_withdraw`
+    // and `_getReward` helpers. This avoids double-executing the heavy modifiers (which recalculate variables and
+    // touch SLOADs multiple times) compared to calling the public `withdraw` and `getReward` directly.
+    function exit() external nonReentrant updateReward(msg.sender) {
+        _withdraw(_balances[msg.sender]);
+        _getReward();
     }
 
     /// @notice Start a new reward period. Can be funded by minting or by pre-funding this contract.
