@@ -1,0 +1,3 @@
+## 2026-06-24 - Redundant State Recalculation in Modifiers
+**Learning:** Reusing the `earned()` function inside the `updateReward` modifier caused an unnecessary recalculation of `rewardPerToken()`, doubling the state reads for a single logic path. Also, composite functions like `exit()` calling external-facing functions like `withdraw()` and `getReward()` triggered `nonReentrant` and `updateReward` multiple times unnecessarily.
+**Action:** Inline the logic using cached variables (like `rewardPerTokenStored`) to avoid redundant calculations, and refactor external-facing functions into internal helpers so composite functions execute modifiers only once.
