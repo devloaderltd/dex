@@ -1,0 +1,3 @@
+## 2026-06-26 - Optimize Redundant Modifiers and Calculations
+**Learning:** In composite functions like `exit()` that call other external-facing functions, modifier execution (like `nonReentrant` and `updateReward`) can be redundantly triggered multiple times. Also, caching state inside a modifier like `updateReward` is ineffective if subsequent calls like `earned()` recalculate the same state instead of using the cache.
+**Action:** Refactor external-facing functions into internal helpers and have composite functions call these helpers directly while applying modifiers only once at the composite level. Avoid recalculating already cached values by using inline calculations when safe.
