@@ -1,0 +1,39 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "INAVOracle",
+  "sourceName": "contracts/lending/interfaces/INAVOracle.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "latestNAV",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nav",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "decimals_",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "updatedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "chainlink",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
