@@ -1,0 +1,3 @@
+## 2026-06-29 - Optimize StakingRewards redundant computations
+**Learning:** In StakingRewards contracts, composite functions like `exit()` that call external-facing functions like `withdraw()` and `getReward()` redundantly execute modifiers like `nonReentrant` and `updateReward`. Moreover, inside `updateReward`, calling `earned(account)` re-calculates `rewardPerToken()` even though we just cached `rewardPerTokenStored`.
+**Action:** Extract the core logic of `withdraw` and `getReward` into internal helpers (e.g. `_withdraw`, `_getReward`) to be called by `exit()` directly (which will have the modifiers applied). Also, in `updateReward`, use the inline calculation for earned using the cached `rewardPerTokenStored`.
