@@ -1,0 +1,3 @@
+## 2026-07-01 - Redundant Modifier Execution and State Reads in Staking
+**Learning:** In standard Synthetix-style staking contracts, composite functions like `exit()` that call `withdraw()` and `getReward()` trigger modifiers like `nonReentrant` and `updateReward` multiple times unnecessarily, costing extra gas. Additionally, `updateReward` recalculates `rewardPerToken()` inside `earned()` right after updating `rewardPerTokenStored`.
+**Action:** Refactor external-facing functions to call internal `_withdraw()` and `_getReward()` helpers, and have `exit()` call those helpers to avoid redundant modifier execution. Inline the `earned()` calculation inside `updateReward` to use the already cached `rewardPerTokenStored`.
