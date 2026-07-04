@@ -1,0 +1,3 @@
+## 2024-05-24 - Avoid redundant modifier and calculation overhead in StakingRewards
+**Learning:** When a composite function calls multiple external-facing functions, it triggers their modifiers (like `nonReentrant` and `updateReward`) redundantly, wasting gas. Additionally, calling `earned()` within `updateReward` recalculates `rewardPerToken()` instead of reusing the freshly cached `rewardPerTokenStored`.
+**Action:** Extract internal helper functions for `withdraw()` and `getReward()` to allow the composite `exit()` function to share a single modifier application. Inline the `earned()` calculation inside `updateReward` to utilize cached state variables.
