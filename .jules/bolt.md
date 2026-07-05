@@ -1,0 +1,3 @@
+## 2024-07-05 - StakingRewards Redundancies
+**Learning:** In Synthetix-style StakingRewards contracts, the `updateReward` modifier redundantly recalculates `rewardPerToken()` through the `earned()` function, wasting gas. Additionally, composite functions like `exit()` that call `withdraw()` and `getReward()` execute the `nonReentrant` and `updateReward` modifiers multiple times.
+**Action:** Replace `earned()` in `updateReward` with inline math using `rewardPerTokenStored`. Refactor external functions into internal helpers (`_withdraw()`, `_getReward()`) so composite functions can call them directly with a single modifier execution.
